@@ -37,7 +37,7 @@ namespace TeamScriber
 
             foreach (var audio in context.Audios)
             {
-                Console.WriteLine($"Processing audio: {audio}");
+                Console.WriteLine($"Processing audio on file: {audio}");
                 Console.WriteLine();
 
                 var outputDirectory = context.Options.TranscriptionOutputDirectory;
@@ -61,9 +61,7 @@ namespace TeamScriber
                     {
                         try
                         {
-                            Console.WriteLine("Transcription of " + audio);
-                            Console.WriteLine("Segment size: " + audioChunk.AudioSegment.Length + " bytes");
-
+                            Console.WriteLine($"Transcribing chunk #{audioChunk.ID} of {audioChunks.Count}");
 
                             var audioResult = await openAiService.Audio.CreateTranscription(new AudioCreateTranscriptionRequest
                             {
@@ -78,33 +76,44 @@ namespace TeamScriber
                             {
                                 success = true;
                                 audioChunk.Text = audioResult.Text;
-                                Console.WriteLine($"Transcription for chunk {audioChunk.ID}:" + Environment.NewLine + audioChunk.Text);
+                                Console.WriteLine($"Transcription for chunk #{audioChunk.ID} of {audioChunks.Count} done.");
+                                if (context.Options.Verbose)
+                                {
+                                    Console.WriteLine($"Transcription for chunk {audioChunk.ID}:" + Environment.NewLine + audioChunk.Text);
+                                    Console.WriteLine();
+                                }
                             }
                             else
                             {
                                 if (audioResult.Error == null)
                                 {
-                                    Console.WriteLine("/!\\ Did not receive a successful response from Whisper API /!\\");
+                                    Console.WriteLine($"/!\\ Did not receive a successful response from Whisper API on chunk #{audioChunk.ID} /!\\");
+                                    Console.WriteLine();
                                 }
                                 else
                                 {
-                                    Console.WriteLine("/!\\ Did not receive a successful response from Whisper API /!\\"
-                                            + Environment.NewLine + "Error " + audioResult.Error.Code + ": " + audioResult.Error.Message);
+                                    Console.WriteLine($"/!\\ Did not receive a successful response from Whisper API on chunk #{audioChunk.ID} /!\\");
+                                    Console.WriteLine("Error " + audioResult.Error.Code + ": " + audioResult.Error.Message);
+                                    Console.WriteLine();
                                 }
                             }
 
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine("/!\\ Did not receive a proper response from Whisper API /!\\" + Environment.NewLine + ex.ToString()); ;
+                            Console.WriteLine($"/!\\ Did not receive a proper response from Whisper API on chunk #{audioChunk.ID} /!\\");
+                            Console.WriteLine(ex.ToString());
+                            Console.WriteLine();
                         }
+
                         --retryCount;
+
                         if(!success)
                         {
-                            Console.WriteLine("Retrying...");
+                            Console.WriteLine($"Retrying chunk #{audioChunk.ID}...");
+                            Console.WriteLine();
                         }
                     }
-                    Console.WriteLine();
                 }));
 
                 Console.WriteLine("Finished transcription of " + audio);
@@ -131,7 +140,7 @@ namespace TeamScriber
 
             while (currentPosition < bigFileReader.TotalTime)
             {
-                Console.WriteLine($"Spliting and converting audio to chunk #{segmentIndex} of {estimatedChunks} to send to Whisper");
+                Console.WriteLine($"Spliting and converting (mp3) audio to chunk #{segmentIndex+1} of {estimatedChunks} to send to Whisper");
 
                 // First, read the M4A from the big file and convert it to WAV data
                 using var wavStream = new MemoryStream();
@@ -154,7 +163,7 @@ namespace TeamScriber
                 wavReader.Flush();
                 byte[] mp3Bytes = mp3Stream.ToArray();
 
-                audioChunks.Add(new AudioChunk() { ID = segmentIndex++, AudioSegment = mp3Bytes, Text = string.Empty });
+                audioChunks.Add(new AudioChunk() { ID = ++segmentIndex, AudioSegment = mp3Bytes, Text = string.Empty });
 
                 string outputFilePath = $"{audiofilename}-{segmentIndex.ToString("0000")}.mp3";
 
@@ -162,7 +171,8 @@ namespace TeamScriber
             }
 
             Console.WriteLine();
-            Console.WriteLine($"Audio split and conversion done");
+            Console.WriteLine($"Audio split (10 minutes max) and conversion (mp3) done.");
+            Console.WriteLine();
 
             return audioChunks;
         }
