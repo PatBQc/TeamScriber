@@ -174,11 +174,11 @@ graph LR
     E
     end
     
-    style A fill:#f9d71c,stroke:#333,stroke-width:2px
-    style B fill:#f9d71c,stroke:#333,stroke-width:2px
-    style C fill:#f9d71c,stroke:#333,stroke-width:2px
-    style D fill:#b3e6cc,stroke:#333,stroke-width:2px
-    style E fill:#b3e6cc,stroke:#333,stroke-width:2px
+    style A fill:#f9d71c,stroke:#333,stroke-width:2px,color:#000
+    style B fill:#f9d71c,stroke:#333,stroke-width:2px,color:#000
+    style C fill:#f9d71c,stroke:#333,stroke-width:2px,color:#000
+    style D fill:#b3e6cc,stroke:#333,stroke-width:2px,color:#000
+    style E fill:#b3e6cc,stroke:#333,stroke-width:2px,color:#000
 ```
 
 - Yellow boxes represent current functionality.
