@@ -149,3 +149,39 @@ Teams Video --> Audio (m4a) --> Transcription (Whisper)
 - OneNote integration
 
 We're excited about the future of TeamScriber and can't wait to bring you these new features!
+
+
+## TeamScriber Workflow
+
+Here's a visual representation of TeamScriber's current functionality and upcoming features:
+
+```mermaid
+graph LR
+    A["Teams Video (mp4)"] --> B["Audio (m4a)"]
+    B --> C["Transcription Whisper (txt)"]
+    
+    subgraph "Current Functionality"
+    A
+    B
+    C
+    end
+    
+    C --> D["Markdown Summary (md)"]
+    C --> E[OneNote Integration]
+    
+    subgraph "Coming Soon"
+    D
+    E
+    end
+    
+    style A fill:#f9d71c,stroke:#333,stroke-width:2px
+    style B fill:#f9d71c,stroke:#333,stroke-width:2px
+    style C fill:#f9d71c,stroke:#333,stroke-width:2px
+    style D fill:#b3e6cc,stroke:#333,stroke-width:2px
+    style E fill:#b3e6cc,stroke:#333,stroke-width:2px
+```
+
+- Yellow boxes represent current functionality.
+- Green boxes represent upcoming features.
+
+We're constantly working to improve TeamScriber and add new features to enhance your meeting note-taking experience!
