@@ -13,5 +13,7 @@ namespace TeamScriber
         public List<string> Videos { get; set; }
 
         public List<string> Audios { get; set; }
+
+        public List<string> Transcriptions { get; set; }
     }
 }

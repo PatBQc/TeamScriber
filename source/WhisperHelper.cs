@@ -35,6 +35,8 @@ namespace TeamScriber
                 ApiKey = context.Options.OpenAIAPIKey
             });
 
+            context.Transcriptions = new List<string>();
+
             foreach (var audio in context.Audios)
             {
                 Console.WriteLine($"Processing audio on file: {audio}");
@@ -47,6 +49,7 @@ namespace TeamScriber
                 }
 
                 var transcription = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(audio) + ".txt");
+                context.Transcriptions.Add(transcription);
 
                 var audioFileContent = await System.IO.File.ReadAllBytesAsync(audio);
                 var audioChunks = SplitAudioIntoChunks(audio, audioFileContent, TimeSpan.FromMinutes(10));

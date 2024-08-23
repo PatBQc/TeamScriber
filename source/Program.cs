@@ -50,3 +50,24 @@ if (context.Options.UseWhisper)
     await WhisperHelper.GenerateTranscription(context);
 }
 
+
+
+if (context.Options.UsePromptsQueries)
+{
+    var vendor = context.Options.Model.Split(':')[0].ToLower();
+    switch (vendor)
+    {
+        case "openai":
+            await OpenAIGptHelper.GenerateAnswers(context);
+            break;
+        case "anthropic":
+            await AnthropicClaudeHelper.GenerateAnswers(context);
+            break;
+        default:
+            Console.WriteLine($"/!\\ Model vendor \"{vendor}\" not supported.");
+            Environment.Exit(0);
+            break;
+    }
+
+}
+
