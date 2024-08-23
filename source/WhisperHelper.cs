@@ -87,11 +87,13 @@ namespace TeamScriber
                             {
                                 if (audioResult.Error == null)
                                 {
+                                    Console.WriteLine(); 
                                     Console.WriteLine($"/!\\ Did not receive a successful response from Whisper API on chunk #{audioChunk.ID} /!\\");
                                     Console.WriteLine();
                                 }
                                 else
                                 {
+                                    Console.WriteLine(); 
                                     Console.WriteLine($"/!\\ Did not receive a successful response from Whisper API on chunk #{audioChunk.ID} /!\\");
                                     Console.WriteLine("Error " + audioResult.Error.Code + ": " + audioResult.Error.Message);
                                     Console.WriteLine();
@@ -101,6 +103,7 @@ namespace TeamScriber
                         }
                         catch (Exception ex)
                         {
+                            Console.WriteLine(); 
                             Console.WriteLine($"/!\\ Did not receive a proper response from Whisper API on chunk #{audioChunk.ID} /!\\");
                             Console.WriteLine(ex.ToString());
                             Console.WriteLine();
@@ -110,6 +113,7 @@ namespace TeamScriber
 
                         if(!success)
                         {
+                            Console.WriteLine(); 
                             Console.WriteLine($"Retrying chunk #{audioChunk.ID}...");
                             Console.WriteLine();
                         }

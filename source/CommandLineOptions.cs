@@ -81,7 +81,7 @@ namespace TeamScriber
         {
             var help = new HelpText
             {
-                Heading = new HeadingInfo("TeamScriber-l fr", "1.0"),
+                Heading = new HeadingInfo("TeamScriber", "1.0"),
                 AdditionalNewLineAfterOption = true,
                 AddDashesToOption = true
             };
