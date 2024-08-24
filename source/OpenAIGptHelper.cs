@@ -139,7 +139,7 @@ namespace TeamScriber
                 var fullAnswers = sb.ToString();
                 File.WriteAllText(answersFilename, fullAnswers);
 
-            } // foreach audio file
+            } // foreach transcription file
         }
 
     } // end of class
