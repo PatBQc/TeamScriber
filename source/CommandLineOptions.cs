@@ -77,19 +77,21 @@ namespace TeamScriber
             """)]
         public bool UsePromptsQueries { get; set; }
 
-        [Option('p', "prompts", Required = false, Default = "",
+        [Option('p', "prompts", Required = false, Default = "https://raw.githubusercontent.com/PatBQc/TeamScriber/main/prompts/prompts.txt",
             HelpText =
             """
             The prompts file containing the list of questions to ask the model on the generated transcriptions.
             This can point to a local file or a URL.
+            Default is https://raw.githubusercontent.com/PatBQc/TeamScriber/main/prompts/prompts.txt
             """)]
         public string Prompts { get; set; }
 
-        [Option('s', "prompts-system", Required = false, Default = "",
+        [Option('s', "prompts-system", Required = false, Default = "https://raw.githubusercontent.com/PatBQc/TeamScriber/main/prompts/promptSystem.txt",
             HelpText =
             """
             The prompts file containing the system prompts used to start the conversation with the model.
             This can point to a local file or a URL.
+            Default is https://raw.githubusercontent.com/PatBQc/TeamScriber/main/prompts/promptSystem.txt
             """)]
         public string SystemPrompts { get; set; }
 
