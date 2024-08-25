@@ -1,0 +1,23 @@
+Sommaire exécutif|Génère un sommaire exécutif concis de la rencontre en 3-5 points clés. Inclus les principaux sujets discutés et les décisions majeures prises.
+
+Liste des actions|Extrais et liste toutes les actions à prendre mentionnées durant la rencontre. Pour chaque action, indique si possible la personne responsable et la date limite (si mentionnée).
+
+Questions en suspens|Identifie et liste les questions ou problèmes qui sont restés sans réponse ou qui nécessitent un suivi ultérieur.
+
+Principaux diagrammes|Reproduis les principaux diagrammes ou schémas discutés pendant la rencontre en utilisant Mermaid. Si aucun diagramme n'est explicitement mentionné, crée une représentation visuelle des concepts clés abordés.
+
+Participants et rôles|Liste les participants à la rencontre et leurs rôles ou contributions principales, si ces informations sont disponibles dans le transcript.
+
+Décisions clés|Identifie et résume les décisions importantes prises lors de la rencontre. Explique brièvement le contexte de chaque décision si possible.
+
+Points de désaccord|Relève les principaux points de désaccord ou de débat durant la rencontre, en résumant brièvement les différentes positions.
+
+Prochaines étapes|Résume les prochaines étapes discutées pour le projet ou les sujets abordés, y compris les dates importantes ou les jalons mentionnés.
+
+Ressources mentionnées|Liste toutes les ressources (documents, outils, sites web, etc.) mentionnées pendant la rencontre qui pourraient être utiles pour le suivi.
+
+Analyse des sentiments|Fais une brève analyse des sentiments généraux exprimés durant la rencontre. Y avait-il de l'enthousiasme, des inquiétudes, ou des frustrations particulières concernant certains sujets ?
+
+Résumé temporel|Crée une ligne du temps des principaux sujets abordés durant la rencontre, en indiquant approximativement combien de temps a été consacré à chaque sujet majeur.
+
+Glossaire technique|Si des termes techniques ou spécifiques à l'industrie ont été utilisés fréquemment, crée un petit glossaire expliquant ces termes dans le contexte de la rencontre.

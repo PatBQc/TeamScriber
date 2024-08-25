@@ -1,0 +1,23 @@
+Executive Summary|Generate a concise executive summary of the meeting in 3-5 key points. Include the main topics discussed and major decisions made.
+
+Action Items|Extract and list all action items mentioned during the meeting. For each action, indicate the responsible person and deadline (if mentioned) when possible.
+
+Open Questions|Identify and list questions or issues that remained unanswered or require further follow-up.
+
+Key Diagrams|Reproduce the main diagrams or schemas discussed during the meeting using Mermaid. If no diagram is explicitly mentioned, create a visual representation of the key concepts discussed.
+
+Participants and Roles|List the meeting participants and their main roles or contributions, if this information is available in the transcript.
+
+Key Decisions|Identify and summarize important decisions made during the meeting. Briefly explain the context of each decision if possible.
+
+Points of Disagreement|Highlight the main points of disagreement or debate during the meeting, briefly summarizing the different positions.
+
+Next Steps|Summarize the next steps discussed for the project or topics covered, including important dates or milestones mentioned.
+
+Mentioned Resources|List all resources (documents, tools, websites, etc.) mentioned during the meeting that could be useful for follow-up.
+
+Sentiment Analysis|Provide a brief analysis of the general sentiments expressed during the meeting. Was there enthusiasm, concerns, or particular frustrations regarding certain topics?
+
+Temporal Summary|Create a timeline of the main topics covered during the meeting, indicating approximately how much time was devoted to each major topic.
+
+Technical Glossary|If technical or industry-specific terms were frequently used, create a small glossary explaining these terms in the context of the meeting.
