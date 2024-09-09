@@ -166,10 +166,41 @@ namespace TeamScriber
                 Console.WriteLine("Finished transcription of " + audio);
                 Console.WriteLine();
 
+                // Adjust timestamps before concatenation
+                if (context.Options.IncludeTimestamps)
+                {
+                    AdjustTimestamps(audioChunks);
+                }
+
+
                 var fullTranscriptionText = string.Join(Environment.NewLine, audioChunks.OrderBy(x => x.ID).Select(x => x.Text));
                 File.WriteAllText(transcription, fullTranscriptionText);
 
             } // foreach audio file
+        }
+
+        private static void AdjustTimestamps(List<AudioChunk> audioChunks)
+        {
+            TimeSpan cumulativeDuration = TimeSpan.Zero;
+
+            foreach (var chunk in audioChunks.OrderBy(x => x.ID))
+            {
+                if (!string.IsNullOrEmpty(chunk.Text))
+                {
+                    var lines = chunk.Text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        var parts = lines[i].Split(' ');
+                        if (parts.Length > 0 && TimeSpan.TryParse(parts[0], out TimeSpan timestamp))
+                        {
+                            var newTimestamp = timestamp + cumulativeDuration;
+                            lines[i] = newTimestamp.ToString(@"hh\:mm\:ss");
+                        }
+                    }
+                    chunk.Text = string.Join(Environment.NewLine, lines);
+                }
+                cumulativeDuration += TimeSpan.FromMinutes(10); // Assuming each chunk is 10 minutes for simplicity
+            }
         }
 
         private static List<AudioChunk> SplitAudioIntoChunks(string audiofilename, byte[] audioFileContent, TimeSpan chunkSize, Context context)
