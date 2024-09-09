@@ -12,11 +12,18 @@ using System.Threading.Tasks;
 using NAudio.Wave;
 using NAudio.MediaFoundation;
 using System.IO;
+using System.Text.Json;
 
 namespace TeamScriber
 {
     internal class WhisperHelper
     {
+
+        private const int MaxCallsPerMinute = 3;
+        private static readonly TimeSpan CallInterval = TimeSpan.FromSeconds(20); // 60 seconds / 3 calls = 20 seconds per call
+        private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1); // Only one concurrent call at a time
+        private static DateTime lastApiCallTime = DateTime.MinValue;
+
         public async static Task GenerateTranscription(Context context)
         {
             if (!context.Options.UseWhisper)
@@ -30,10 +37,18 @@ namespace TeamScriber
                 context.Options.OpenAIAPIKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
             }
 
-            var openAiService = new OpenAIService(new OpenAiOptions()
+            var openAiOptions = new OpenAiOptions()
             {
                 ApiKey = context.Options.OpenAIAPIKey
-            });
+            };
+
+            // Set the base path if provided
+            if (!string.IsNullOrEmpty(context.Options.OpenAIBasePath))
+            {
+                openAiOptions.BaseDomain = context.Options.OpenAIBasePath;
+            }
+
+            var openAiService = new OpenAIService(openAiOptions);
 
             context.Transcriptions = new List<string>();
 
@@ -46,15 +61,23 @@ namespace TeamScriber
                 if (string.IsNullOrEmpty(outputDirectory))
                 {
                     outputDirectory = Path.GetDirectoryName(audio);
+                    if (string.IsNullOrEmpty(outputDirectory))
+                    {
+                        outputDirectory = Directory.GetCurrentDirectory();
+                    }
+                    Console.WriteLine($"Output directory is not set. Defaulting to current directory: {outputDirectory}");
+                }
+                else
+                {
+                    Console.WriteLine($"Using configured output directory: {outputDirectory}");
                 }
 
                 var transcription = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(audio) + ".txt");
                 context.Transcriptions.Add(transcription);
 
                 var audioFileContent = await System.IO.File.ReadAllBytesAsync(audio);
-                var audioChunks = SplitAudioIntoChunks(audio, audioFileContent, TimeSpan.FromMinutes(10));
+                var audioChunks = SplitAudioIntoChunks(audio, audioFileContent, TimeSpan.FromMinutes(10), context);
 
-                //foreach (var audioChunk in audioChunks)
                 await Task.WhenAll(audioChunks.Select(async audioChunk =>
                 {
                     int retryCount = 5;
@@ -62,9 +85,21 @@ namespace TeamScriber
 
                     while (!success && retryCount >= 0)
                     {
+                        await semaphore.WaitAsync();
                         try
                         {
+                            // Respect API rate limit
+                            var timeSinceLastCall = DateTime.Now - lastApiCallTime;
+                            if (timeSinceLastCall < CallInterval)
+                            {
+                                var delay = CallInterval - timeSinceLastCall;
+                                Console.WriteLine($"Waiting for {delay.TotalSeconds} seconds due to rate limiting...");
+                                await Task.Delay(delay);
+                            }
+
                             Console.WriteLine($"Transcribing chunk #{audioChunk.ID} of {audioChunks.Count}");
+
+                            var responseFormat = context.Options.IncludeTimestamps ? StaticValues.AudioStatics.ResponseFormat.Srt : StaticValues.AudioStatics.ResponseFormat.VerboseJson;
 
                             var audioResult = await openAiService.Audio.CreateTranscription(new AudioCreateTranscriptionRequest
                             {
@@ -72,13 +107,13 @@ namespace TeamScriber
                                 File = audioChunk.AudioSegment,
                                 Model = Models.WhisperV1,
                                 Language = context.Options.WhisperLanguage,
-                                ResponseFormat = StaticValues.AudioStatics.ResponseFormat.VerboseJson
+                                ResponseFormat = responseFormat
                             });
 
                             if (audioResult.Successful)
                             {
                                 success = true;
-                                audioChunk.Text = audioResult.Text;
+                                audioChunk.Text = responseFormat == StaticValues.AudioStatics.ResponseFormat.Srt ? ExtractPlainText(audioResult.Text) : audioResult.Text;
                                 Console.WriteLine($"Transcription for chunk #{audioChunk.ID} of {audioChunks.Count} done.");
                                 if (context.Options.Verbose)
                                 {
@@ -90,13 +125,13 @@ namespace TeamScriber
                             {
                                 if (audioResult.Error == null)
                                 {
-                                    Console.WriteLine(); 
+                                    Console.WriteLine();
                                     Console.WriteLine($"/!\\ Did not receive a successful response from Whisper API on chunk #{audioChunk.ID} /!\\");
                                     Console.WriteLine();
                                 }
                                 else
                                 {
-                                    Console.WriteLine(); 
+                                    Console.WriteLine();
                                     Console.WriteLine($"/!\\ Did not receive a successful response from Whisper API on chunk #{audioChunk.ID} /!\\");
                                     Console.WriteLine("Error " + audioResult.Error.Code + ": " + audioResult.Error.Message);
                                     Console.WriteLine();
@@ -106,17 +141,22 @@ namespace TeamScriber
                         }
                         catch (Exception ex)
                         {
-                            Console.WriteLine(); 
+                            Console.WriteLine();
                             Console.WriteLine($"/!\\ Did not receive a proper response from Whisper API on chunk #{audioChunk.ID} /!\\");
                             Console.WriteLine(ex.ToString());
                             Console.WriteLine();
                         }
+                        finally
+                        {
+                            lastApiCallTime = DateTime.Now;
+                            semaphore.Release();
+                        }
 
                         --retryCount;
 
-                        if(!success)
+                        if (!success)
                         {
-                            Console.WriteLine(); 
+                            Console.WriteLine();
                             Console.WriteLine($"Retrying chunk #{audioChunk.ID}...");
                             Console.WriteLine();
                         }
@@ -126,55 +166,97 @@ namespace TeamScriber
                 Console.WriteLine("Finished transcription of " + audio);
                 Console.WriteLine();
 
+                // Adjust timestamps before concatenation
+                if (context.Options.IncludeTimestamps)
+                {
+                    AdjustTimestamps(audioChunks);
+                }
+
+
                 var fullTranscriptionText = string.Join(Environment.NewLine, audioChunks.OrderBy(x => x.ID).Select(x => x.Text));
                 File.WriteAllText(transcription, fullTranscriptionText);
 
             } // foreach audio file
         }
 
-        private static List<AudioChunk> SplitAudioIntoChunks(string audiofilename, byte[] audioFileContent, TimeSpan chunkSize)
+        private static void AdjustTimestamps(List<AudioChunk> audioChunks)
+        {
+            TimeSpan cumulativeDuration = TimeSpan.Zero;
+
+            foreach (var chunk in audioChunks.OrderBy(x => x.ID))
+            {
+                if (!string.IsNullOrEmpty(chunk.Text))
+                {
+                    var lines = chunk.Text.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                    for (int i = 0; i < lines.Length; i++)
+                    {
+                        var parts = lines[i].Split(' ');
+                        if (parts.Length > 0 && TimeSpan.TryParse(parts[0], out TimeSpan timestamp))
+                        {
+                            var newTimestamp = timestamp + cumulativeDuration;
+                            lines[i] = newTimestamp.ToString(@"hh\:mm\:ss");
+                        }
+                    }
+                    chunk.Text = string.Join(Environment.NewLine, lines);
+                }
+                cumulativeDuration += TimeSpan.FromMinutes(10); // Assuming each chunk is 10 minutes for simplicity
+            }
+        }
+
+        private static List<AudioChunk> SplitAudioIntoChunks(string audiofilename, byte[] audioFileContent, TimeSpan chunkSize, Context context)
         {
             var audioChunks = new List<AudioChunk>();
-
-            using var bigFileReader = new MediaFoundationReader(audiofilename);
-
             int segmentIndex = 0;
             TimeSpan currentPosition = TimeSpan.Zero;
-            int bytesPerSecond = bigFileReader.WaveFormat.AverageBytesPerSecond;
-            int bytesPerSegment = (int)(bytesPerSecond * chunkSize.TotalSeconds);
 
-            int estimatedChunks = (int)Math.Ceiling(bigFileReader.TotalTime.TotalSeconds / chunkSize.TotalSeconds);
-
-            while (currentPosition < bigFileReader.TotalTime)
+            // Utilisation de MediaFoundationReader pour tous les types de fichiers, y compris MP3 et M4A
+            using (var reader = new MediaFoundationReader(audiofilename))
             {
-                Console.WriteLine($"Spliting and converting (mp3) audio to chunk #{segmentIndex+1} of {estimatedChunks} to send to Whisper");
+                var estimatedChunks = (int)Math.Ceiling(reader.TotalTime.TotalSeconds / chunkSize.TotalSeconds);
+                long targetBytes = (long)(chunkSize.TotalSeconds * reader.WaveFormat.AverageBytesPerSecond);
 
-                // First, read the M4A from the big file and convert it to WAV data
-                using var wavStream = new MemoryStream();
-                using var wavWriter = new WaveFileWriter(wavStream, bigFileReader.WaveFormat);
+                while (currentPosition < reader.TotalTime)
+                {
+                    Console.WriteLine($"Splitting and converting audio to chunk #{segmentIndex + 1} of {estimatedChunks} to send to Whisper");
 
-                byte[] wavBuffer = new byte[bytesPerSegment];
-                int bytesRead = bigFileReader.Read(wavBuffer, 0, bytesPerSegment);
-                wavWriter.Write(wavBuffer, 0, bytesRead);
-                wavWriter.Flush();
-                wavWriter.Close();
+                    using (var segmentStream = new MemoryStream())
+                    {
+                        byte[] buffer = new byte[1024];
+                        long bytesWritten = 0;
 
+                        while (bytesWritten < targetBytes)
+                        {
+                            int bytesRead = reader.Read(buffer, 0, buffer.Length);
+                            if (bytesRead == 0)
+                                break;
 
-                // Second, convert the WAV data in the MemoryStream to MP3
-                using var secondWavStream = new MemoryStream(wavStream.ToArray());
-                using var wavReader = new WaveFileReader(secondWavStream);
-                using var mp3Stream = new MemoryStream();
+                            segmentStream.Write(buffer, 0, bytesRead);
+                            bytesWritten += bytesRead;
+                        }
 
-                MediaFoundationEncoder.EncodeToMp3(wavReader, mp3Stream, 192000);
-                mp3Stream.Flush();
-                wavReader.Flush();
-                byte[] mp3Bytes = mp3Stream.ToArray();
+                        segmentStream.Flush();
+                        byte[] segmentBytes;
 
-                audioChunks.Add(new AudioChunk() { ID = ++segmentIndex, AudioSegment = mp3Bytes, Text = string.Empty });
+                        // Réinitialise la position du MemoryStream pour bien encoder en MP3
+                        segmentStream.Position = 0;
 
-                string outputFilePath = $"{audiofilename}-{segmentIndex.ToString("0000")}.mp3";
+                        using (var mp3Stream = new MemoryStream())
+                        {
+                            MediaFoundationEncoder.EncodeToMp3(new RawSourceWaveStream(segmentStream, reader.WaveFormat), mp3Stream);
+                            mp3Stream.Flush();
+                            segmentBytes = mp3Stream.ToArray();
+                        }
 
-                currentPosition += chunkSize;
+                        audioChunks.Add(new AudioChunk() { ID = ++segmentIndex, AudioSegment = segmentBytes, Text = string.Empty });
+
+                        // Enregistrer le segment dans le répertoire de sortie
+                        var outputDirectory = context.Options.AudioOutputDirectory ?? Directory.GetCurrentDirectory();
+                        var segmentFilename = Path.Combine(outputDirectory, $"{Path.GetFileNameWithoutExtension(audiofilename)}-part-{segmentIndex}.mp3");
+                        File.WriteAllBytes(segmentFilename, segmentBytes);
+
+                        currentPosition += chunkSize;
+                    }
+                }
             }
 
             Console.WriteLine();
@@ -184,12 +266,37 @@ namespace TeamScriber
             return audioChunks;
         }
 
+        private static string ExtractPlainText(string srtJsonResponse)
+        {
+            try
+            {
+                var jsonDoc = JsonDocument.Parse(srtJsonResponse);
+                if (jsonDoc.RootElement.TryGetProperty("text", out var textElement))
+                {
+                    var srtLines = textElement.GetString().Split(new[] { "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+                    var plainTextBuilder = new StringBuilder();
+                    foreach (var srtLine in srtLines)
+                    {
+                        var srtParts = srtLine.Split('\n');
+                        if (srtParts.Length >= 3)
+                        {
+                            var timestamp = srtParts[1]; // Second line is the timestamp
+                            var text = string.Join(" ", srtParts.Skip(2)); // Skip ID and get only the text
+                            plainTextBuilder.AppendLine(timestamp);
+                            plainTextBuilder.AppendLine(text);
+                            plainTextBuilder.AppendLine(); // Add an extra new line for readability
+                        }
+                    }
+                    return plainTextBuilder.ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error parsing SRT JSON response: {ex.Message}");
+            }
+            return string.Empty;
+        }
 
     } // end of class
 }
-
-
-
-
-
 
