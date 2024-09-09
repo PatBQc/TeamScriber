@@ -28,10 +28,18 @@ namespace TeamScriber
                 context.Options.OpenAIAPIKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
             }
 
-            var openAiService = new OpenAIService(new OpenAiOptions()
+            var openAiOptions = new OpenAiOptions()
             {
                 ApiKey = context.Options.OpenAIAPIKey
-            });
+            };
+
+            // Set the base path if provided
+            if (!string.IsNullOrEmpty(context.Options.OpenAIBasePath))
+            {
+                openAiOptions.BaseDomain = context.Options.OpenAIBasePath;
+            }
+
+            var openAiService = new OpenAIService(openAiOptions);
 
             var prompts = await PromptsHelper.GetPrompts(context);
 
@@ -144,9 +152,3 @@ namespace TeamScriber
 
     } // end of class
 }
-
-
-
-
-
-
