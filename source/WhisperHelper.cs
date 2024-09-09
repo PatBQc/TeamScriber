@@ -61,6 +61,15 @@ namespace TeamScriber
                 if (string.IsNullOrEmpty(outputDirectory))
                 {
                     outputDirectory = Path.GetDirectoryName(audio);
+                    if (string.IsNullOrEmpty(outputDirectory))
+                    {
+                        outputDirectory = Directory.GetCurrentDirectory();
+                    }
+                    Console.WriteLine($"Output directory is not set. Defaulting to current directory: {outputDirectory}");
+                }
+                else
+                {
+                    Console.WriteLine($"Using configured output directory: {outputDirectory}");
                 }
 
                 var transcription = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(audio) + ".txt");
@@ -259,3 +268,4 @@ namespace TeamScriber
 
     } // end of class
 }
+
