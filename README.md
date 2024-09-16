@@ -1,3 +1,5 @@
+![TeamScriber Banner](https://raw.githubusercontent.com/PatBQc/TeamScriber/main/docs/banner.png)
+
 # TeamScriber ✍️🎙️
 
 ## Turn Your Teams Meetings into Actionable Insights! 🚀
