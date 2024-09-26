@@ -5,8 +5,61 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TeamScriber.Wpf"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="600" Width="800">
     <Grid>
-        <Label Content="YOLO!" FontSize="128"/>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <!-- TabControl for Simple and Advanced modes -->
+        <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10,10,10,120" Grid.Row="0">
+            <!-- Simple Tab -->
+            <TabItem Header="Simple">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Select a Teams video" />
+                    <Button Content="Choose a file" Click="OnSelectFileSimple" />
+                    <TextBlock Text="Transcription language" Margin="0,10,0,0"/>
+                    <ComboBox Name="languageComboBoxSimple" SelectedIndex="0">
+                        <ComboBoxItem Content="Auto"/>
+                        <ComboBoxItem Content="French"/>
+                        <ComboBoxItem Content="English"/>
+                    </ComboBox>
+                    <Button Content="Start transcription" Click="OnTranscribeSimple" Margin="0,10,0,0"/>
+                </StackPanel>
+            </TabItem>
+
+            <!-- Advanced Tab -->
+            <TabItem Header="Advanced">
+                <StackPanel Margin="10">
+                    <TextBlock Text="Select a video or directory" />
+                    <Button Content="Choose a file or directory" Click="OnSelectFileAdvanced" />
+
+                    <TextBlock Text="Audio output path" Margin="0,10,0,0"/>
+                    <TextBox Name="audioPathTextBox" />
+
+                    <TextBlock Text="OpenAI API Key" Margin="0,10,0,0"/>
+                    <TextBox Name="apiKeyTextBox" />
+
+                    <TextBlock Text="Transcription model" Margin="0,10,0,0"/>
+                    <ComboBox Name="modelComboBox" SelectedIndex="0">
+                        <ComboBoxItem Content="OpenAI:gpt-4"/>
+                        <ComboBoxItem Content="Anthropic:claude-3-5-sonnet-20240620"/>
+                    </ComboBox>
+
+                    <TextBlock Text="Transcription language" Margin="0,10,0,0"/>
+                    <ComboBox Name="languageComboBoxAdvanced" SelectedIndex="0">
+                        <ComboBoxItem Content="Auto"/>
+                        <ComboBoxItem Content="French"/>
+                        <ComboBoxItem Content="English"/>
+                    </ComboBox>
+
+                    <CheckBox Name="timestampsCheckbox" Content="Include timestamps in transcription" Margin="0,10,0,0"/>
+                    <Button Content="Start transcription" Click="OnTranscribeAdvanced" Margin="0,10,0,0"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+
+        <!-- Log area outside of TabControl -->
+        <TextBox Name="logTextBox" VerticalAlignment="Stretch" Margin="10" IsReadOnly="True" VerticalScrollBarVisibility="Auto" Grid.Row="1"/>
     </Grid>
 </Window>
