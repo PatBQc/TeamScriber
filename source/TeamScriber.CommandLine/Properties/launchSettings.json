@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "TeamScriber": {
+      "commandName": "Project",
+      "commandLineArgs": "-i C:\\Temp\\TeamsVideo \r\n-l fr \r\n--model Anthropic:claude-3-5-sonnet-20240620\r\n--prompts-system \"C:\\temp\\TeamsVideo\\promptSystem.txt\"\r\n--prompts \"C:\\temp\\TeamsVideo\\prompts.txt\""
+    }
+  }
+}
