@@ -94,7 +94,9 @@ namespace TeamScriber
                             {
                                 var delay = CallInterval - timeSinceLastCall;
                                 Console.WriteLine($"Waiting for {delay.TotalSeconds} seconds due to rate limiting...");
-                                await Task.Delay(delay);
+
+                                // Let's remove this delay for now, as I am working with OpenAI directly for the moment
+                                // await Task.Delay(delay);
                             }
 
                             Console.WriteLine($"Transcribing chunk #{audioChunk.ID} of {audioChunks.Count}");

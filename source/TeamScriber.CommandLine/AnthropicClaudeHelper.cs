@@ -25,7 +25,7 @@ namespace TeamScriber
             var model = context.Options.Model.Split(':')[1];
 
             // Configure your OpenAI API key
-            if (string.IsNullOrEmpty(context.Options.OpenAIAPIKey))
+            if (string.IsNullOrEmpty(context.Options.AnthropicAPIKey))
             {
                 context.Options.AnthropicAPIKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
             }
