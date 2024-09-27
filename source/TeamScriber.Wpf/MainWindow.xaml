@@ -47,7 +47,7 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox Name="videoPathTextBoxAdvanced" IsReadOnly="True" Grid.Column="0" Margin="0,0,10,0" />
+                            <TextBox Name="videoPathTextBoxAdvanced" Grid.Column="0" Margin="0,0,10,0" />
                             <Button Content="Choose a file" Click="OnSelectFileAdvanced" Grid.Column="1" Margin="0,0,10,0" />
                             <Button Content="Choose a directory" Click="OnSelectDirectoryAdvanced" Grid.Column="2" />
                         </Grid>

@@ -189,6 +189,8 @@ namespace TeamScriber.Wpf
                 });
 
                 await TeamScriber.CommandLine.Program.Main(args, progress);
+
+                MessageBox.Show("Transcription completed successfully.", "Finished", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             catch (Exception ex)
             {
