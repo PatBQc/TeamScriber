@@ -82,7 +82,7 @@ namespace TeamScriber
                 context.Transcriptions.Add(transcription);
 
                 var audioFileContent = await System.IO.File.ReadAllBytesAsync(audio);
-                var audioChunks = SplitAudioIntoChunks(audio, audioFileContent, TimeSpan.FromMinutes(10), context);
+                var audioChunks = SplitAudioIntoChunks(audio, audioFileContent, LogicConsts.AudioSegmentTime, context);
 
                 double progressChunk = LogicConsts.ProgressWeightWhisperConversion / (double) audioChunks.Count;
                 double progressChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightWhisperConversion;
@@ -227,7 +227,7 @@ namespace TeamScriber
                     }
                     chunk.Text = string.Join(Environment.NewLine, lines);
                 }
-                cumulativeDuration += TimeSpan.FromMinutes(10); // Assuming each chunk is 10 minutes for simplicity
+                cumulativeDuration += LogicConsts.AudioSegmentTime; 
             }
         }
 
@@ -282,7 +282,7 @@ namespace TeamScriber
 
                         // Enregistrer le segment dans le répertoire de sortie
                         var outputDirectory = context.Options.AudioOutputDirectory ?? Directory.GetCurrentDirectory();
-                        var segmentFilename = Path.Combine(outputDirectory, $"{Path.GetFileNameWithoutExtension(audiofilename)}-part-{segmentIndex}.mp3");
+                        var segmentFilename = Path.Combine(outputDirectory, $"{Path.GetFileNameWithoutExtension(audiofilename)}-part-{segmentIndex.ToString("0000")}.mp3");
                         File.WriteAllBytes(segmentFilename, segmentBytes);
 
                         currentPosition += chunkSize;
@@ -297,7 +297,7 @@ namespace TeamScriber
             }
 
             Console.WriteLine();
-            Console.WriteLine($"Audio split (10 minutes max) and conversion (mp3) done.");
+            Console.WriteLine($"Audio split ({LogicConsts.AudioSegmentTime.ToString()} max) and conversion (mp3) done.");
             Console.WriteLine();
 
             return audioChunks;
