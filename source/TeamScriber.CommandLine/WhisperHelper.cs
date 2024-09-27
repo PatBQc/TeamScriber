@@ -13,6 +13,7 @@ using NAudio.Wave;
 using NAudio.MediaFoundation;
 using System.IO;
 using System.Text.Json;
+using TeamScriber.CommandLine;
 
 namespace TeamScriber
 {
@@ -83,6 +84,9 @@ namespace TeamScriber
                 var audioFileContent = await System.IO.File.ReadAllBytesAsync(audio);
                 var audioChunks = SplitAudioIntoChunks(audio, audioFileContent, TimeSpan.FromMinutes(10), context);
 
+                double progressChunk = LogicConsts.ProgressWeightWhisperConversion / (double) audioChunks.Count;
+                double progressChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightWhisperConversion;
+
                 await Task.WhenAll(audioChunks.Select(async audioChunk =>
                 {
                     int retryCount = 5;
@@ -136,6 +140,9 @@ namespace TeamScriber
                                     Console.WriteLine($"Transcription for chunk {audioChunk.ID}:" + Environment.NewLine + audioChunk.Text);
                                     Console.WriteLine();
                                 }
+
+                                context.ProgressInfo.Value += progressChunk;
+                                context.ProgressRepporter?.Report(context.ProgressInfo);
                             }
                             else
                             {
@@ -195,6 +202,8 @@ namespace TeamScriber
                 var fullTranscriptionText = string.Join(Environment.NewLine, audioChunks.OrderBy(x => x.ID).Select(x => x.Text));
                 File.WriteAllText(transcription, fullTranscriptionText);
 
+                context.ProgressInfo.Value = progressChunksCompleted;
+                context.ProgressRepporter?.Report(context.ProgressInfo);
             } // foreach audio file
         }
 
@@ -233,6 +242,9 @@ namespace TeamScriber
             {
                 var estimatedChunks = (int)Math.Ceiling(reader.TotalTime.TotalSeconds / chunkSize.TotalSeconds);
                 long targetBytes = (long)(chunkSize.TotalSeconds * reader.WaveFormat.AverageBytesPerSecond);
+
+                double progressChunk = LogicConsts.ProgressWeightAudioPerVideo / (double) estimatedChunks;
+                double progressChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightAudioPerVideo;
 
                 while (currentPosition < reader.TotalTime)
                 {
@@ -274,8 +286,14 @@ namespace TeamScriber
                         File.WriteAllBytes(segmentFilename, segmentBytes);
 
                         currentPosition += chunkSize;
+
+                        context.ProgressInfo.Value += progressChunk;
+                        context.ProgressRepporter?.Report(context.ProgressInfo);
                     }
                 }
+
+                context.ProgressInfo.Value = progressChunksCompleted;
+                context.ProgressRepporter?.Report(context.ProgressInfo);
             }
 
             Console.WriteLine();

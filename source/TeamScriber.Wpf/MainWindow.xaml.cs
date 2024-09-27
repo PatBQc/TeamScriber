@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using TeamScriber.CommandLine;
 
 namespace TeamScriber.Wpf
 {
@@ -175,7 +176,19 @@ namespace TeamScriber.Wpf
                 Console.WriteLine($"Running TeamScriber with arguments: {arguments}\n");
                 Console.WriteLine();
 
-                await TeamScriber.CommandLine.Program.Main(args);
+                var progress = new Progress<ProgressInfo>(info =>
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        if(progressBar.Maximum != info.MaxValue)
+                        {
+                            progressBar.Maximum = info.MaxValue;
+                        }
+                        progressBar.Value = info.Value;
+                    });
+                });
+
+                await TeamScriber.CommandLine.Program.Main(args, progress);
             }
             catch (Exception ex)
             {

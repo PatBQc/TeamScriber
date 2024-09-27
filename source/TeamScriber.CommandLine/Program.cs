@@ -12,6 +12,19 @@ namespace TeamScriber.CommandLine
     {
         public static async Task Main(string[] args)
         {
+            await Program.Main(args, null);
+        }
+
+        public static async Task Main(string[] args, IProgress<ProgressInfo>? progress)
+        {
+            if(progress == null)
+            {
+                // just do nothing with the reporting
+                progress = new Progress<ProgressInfo>();
+            }
+
+            var progressInfo = new ProgressInfo();
+
             var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .WithParsed(options =>
                 {
@@ -38,10 +51,15 @@ namespace TeamScriber.CommandLine
 
             Context context = new Context();
             context.Options = result.Value;
+            context.ProgressRepporter = progress;
+            context.ProgressInfo = progressInfo;
+            context.ProgressInfo.MaxValue = 100; // temporary value, will be updated later
 
             if (context.Options.RecordAudio)
             {
                 await AudioRecordingHelper.RecordAudioAsync(context);
+                progressInfo.Value++;
+                progress.Report(progressInfo);
             }
             else
             {
@@ -61,6 +79,8 @@ namespace TeamScriber.CommandLine
                         context.Videos.Add(video);
                     }
                 }
+
+                progressInfo.MaxValue = GetMaxProgressValue(context);
 
                 FfmpegHelper.GenerateAudio(context);
             }
@@ -87,6 +107,38 @@ namespace TeamScriber.CommandLine
                         break;
                 }
             }
+        }
+
+        private static int GetMaxProgressValue(Context context)
+        {
+            int steps = 0;
+
+            if (context.Options.RecordAudio)
+            {
+                steps++; // Step to record audio
+            }
+            else
+            {
+                // Count the number of videos to transcribe
+                foreach (var video in context.Videos)
+                {
+                    steps++; // Step to transcribe each video to single audio file
+
+                    steps += LogicConsts.ProgressWeightAudioPerVideo; // Step to generate audio files from video
+                }
+            }
+
+            if (context.Options.UseWhisper)
+            {
+                steps += LogicConsts.ProgressWeightWhisperConversion; // Step to generate transcription using Whisper
+            }
+
+            if (context.Options.UsePromptsQueries)
+            {
+                steps += LogicConsts.ProgressWeightPromptQueries; // Step to generate answers using prompts
+            }
+
+            return steps;
         }
     }
 }

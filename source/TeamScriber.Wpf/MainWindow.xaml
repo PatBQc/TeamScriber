@@ -9,6 +9,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <!-- TabControl for Simple and Advanced modes -->
@@ -61,7 +62,7 @@
 
                         <CheckBox Name="useWhisperAzureThrottlingCheckBox" Content="Use Azure throttling limits" IsChecked="false" Margin="0,10,0,0"/>
 
-                        <TextBlock Text="Whisper language (ISO-639-1 format)" Margin="0,10,0,0"/>
+                        <TextBlock Text="Whisper language (ISO-639-1 format, aka English is en, French is fr, ...)" Margin="0,10,0,0"/>
                         <TextBox Name="whisperLanguageTextBox" />
 
                         <TextBlock Text="OpenAI API Key" Margin="0,10,0,0"/>
@@ -93,9 +94,9 @@
                         <TextBlock Text="Anthropic API Key" Margin="0,10,0,0"/>
                         <TextBox Name="apiKeyAnthropicTextBox" />
 
-                        <CheckBox Name="verboseCheckBox" Content="Display execution details" Margin="0,10,0,0"/>
+                        <CheckBox Name="verboseCheckBox" Content="Display execution details" Margin="0,10,0,0" IsChecked="True" />
 
-                        <CheckBox Name="recordAudioCheckBox" Content="Start by recording audio from default microphone and speaker" Margin="0,10,0,0"/>
+                        <CheckBox Name="recordAudioCheckBox" Content="Start by recording audio from default microphone and speaker" Margin="0,10,0,0" IsEnabled="False"/>
 
                         <CheckBox Name="includeTimestampsCheckBox" Content="Include timestamps in the Whisper transcription output" Margin="0,10,0,0"/>
 
@@ -106,6 +107,7 @@
         </TabControl>
 
         <!-- Log area outside of TabControl -->
-        <TextBox Name="logTextBox" VerticalAlignment="Stretch" Margin="10" IsReadOnly="True" VerticalScrollBarVisibility="Auto" TextWrapping="WrapWithOverflow" Grid.Row="1"/>
+        <ProgressBar x:Name="progressBar" Minimum="0" Maximum="100" Height="30" Margin="10, 10, 10, 0" Grid.Row="1" />
+        <TextBox Name="logTextBox" VerticalAlignment="Stretch" Margin="10" IsReadOnly="True" VerticalScrollBarVisibility="Auto" TextWrapping="WrapWithOverflow" Grid.Row="2"/>
     </Grid>
 </Window>

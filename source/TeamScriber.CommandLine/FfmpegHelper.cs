@@ -84,6 +84,9 @@ namespace TeamScriber
                     Environment.Exit(0);
                 }
 
+                context.ProgressInfo.Value++;
+                context.ProgressRepporter?.Report(context.ProgressInfo);
+
                 Console.WriteLine($"Audio file generated: {audio}");
                 Console.WriteLine();
                 context.Audios.Add(audio);

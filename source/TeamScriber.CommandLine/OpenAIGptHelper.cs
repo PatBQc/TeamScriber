@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using NAudio.Wave;
 using NAudio.MediaFoundation;
 using System.IO;
+using TeamScriber.CommandLine;
 
 namespace TeamScriber
 {
@@ -43,6 +44,9 @@ namespace TeamScriber
 
             var prompts = await PromptsHelper.GetPrompts(context);
 
+            double progressTranscriptionChunk = LogicConsts.ProgressWeightPromptQueries / (double) context.Transcriptions.Count;
+            double progressTranscriptionChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightPromptQueries;
+
             foreach (var transcriptionFilename in context.Transcriptions)
             {
                 var transcription = await File.ReadAllTextAsync(transcriptionFilename);
@@ -63,6 +67,8 @@ namespace TeamScriber
                 int promptIndex = 0;
 
                 StringBuilder sb = new StringBuilder();
+
+                double progressPromptChunk = progressTranscriptionChunk / (double) prompts.Count;
 
                 foreach (var prompt in prompts)
                 {
@@ -103,6 +109,9 @@ namespace TeamScriber
                                     Console.WriteLine($"Answer is: {answer}");
                                     Console.WriteLine();
                                 }
+
+                                context.ProgressInfo.Value += progressPromptChunk;
+                                context.ProgressRepporter?.Report(context.ProgressInfo);
                             }
                             else
                             {
@@ -148,6 +157,9 @@ namespace TeamScriber
                 File.WriteAllText(answersFilename, fullAnswers);
 
             } // foreach transcription file
+
+            context.ProgressInfo.Value = progressTranscriptionChunksCompleted;
+            context.ProgressRepporter?.Report(context.ProgressInfo);
         }
 
     } // end of class

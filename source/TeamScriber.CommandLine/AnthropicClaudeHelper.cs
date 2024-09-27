@@ -14,6 +14,7 @@ using OpenAI.Managers;
 using OpenAI.ObjectModels.RequestModels;
 using Anthropic.ApiModels.RequestModels;
 using Anthropic.ApiModels.SharedModels;
+using TeamScriber.CommandLine;
 
 namespace TeamScriber
 {
@@ -21,10 +22,10 @@ namespace TeamScriber
     {
         public async static Task GenerateAnswers(Context context)
         {
-            // We wont validate the model name, just send it directly as is to OpenAI
+            // We wont validate the model name, just send it directly as is to Anthropic
             var model = context.Options.Model.Split(':')[1];
 
-            // Configure your OpenAI API key
+            // Configure your Anthropic API key
             if (string.IsNullOrEmpty(context.Options.AnthropicAPIKey))
             {
                 context.Options.AnthropicAPIKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
@@ -36,6 +37,9 @@ namespace TeamScriber
             });
 
             var prompts = await PromptsHelper.GetPrompts(context);
+
+            double progressTranscriptionChunk = LogicConsts.ProgressWeightPromptQueries / (double) context.Transcriptions.Count;
+            double progressTranscriptionChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightPromptQueries;
 
             foreach (var transcriptionFilename in context.Transcriptions)
             {
@@ -61,6 +65,8 @@ namespace TeamScriber
                 int promptIndex = 0;
 
                 StringBuilder sb = new StringBuilder();
+
+                double progressPromptChunk = progressTranscriptionChunk / (double) prompts.Count;
 
                 foreach (var prompt in prompts)
                 {
@@ -101,19 +107,22 @@ namespace TeamScriber
                                     Console.WriteLine($"Answer is: {answer}");
                                     Console.WriteLine();
                                 }
+
+                                context.ProgressInfo.Value += progressPromptChunk;
+                                context.ProgressRepporter?.Report(context.ProgressInfo);
                             }
                             else
                             {
                                 if (answerResult.Error == null)
                                 {
                                     Console.WriteLine();
-                                    Console.WriteLine($"/!\\ Did not receive a successful response from OpenAI {model} API /!\\");
+                                    Console.WriteLine($"/!\\ Did not receive a successful response from Anthropic {model} API /!\\");
                                     Console.WriteLine();
                                 }
                                 else
                                 {
                                     Console.WriteLine();
-                                    Console.WriteLine($"/!\\ Did not receive a successful response from OpenAI API {model} /!\\");
+                                    Console.WriteLine($"/!\\ Did not receive a successful response from Anthropic API {model} /!\\");
                                     Console.WriteLine("Error " + answerResult.Error);
                                     Console.WriteLine();
                                 }
@@ -123,7 +132,7 @@ namespace TeamScriber
                         catch (Exception ex)
                         {
                             Console.WriteLine();
-                            Console.WriteLine($"/!\\ Did not receive a proper response from OpenAI API {model} /!\\");
+                            Console.WriteLine($"/!\\ Did not receive a proper response from Anthropic API {model} /!\\");
                             Console.WriteLine(ex.ToString());
                             Console.WriteLine();
                         }
@@ -146,6 +155,9 @@ namespace TeamScriber
                 File.WriteAllText(answersFilename, fullAnswers);
 
             } // foreach transcription file
+
+            context.ProgressInfo.Value = progressTranscriptionChunksCompleted;
+            context.ProgressRepporter?.Report(context.ProgressInfo);
         }
 
     } // end of class
