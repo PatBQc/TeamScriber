@@ -18,11 +18,11 @@ namespace TeamScriber
 {
     internal class WhisperHelper
     {
-        // todo async work
-        //private const int MaxCallsPerMinute = 3;
-        //private static readonly TimeSpan CallInterval = TimeSpan.FromSeconds(20); // 60 seconds / 3 calls = 20 seconds per call
-        //private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1); // Only one concurrent call at a time
-        //private static DateTime lastApiCallTime = DateTime.MinValue;
+        // Required to control Azure throtling async work
+        private const int MaxCallsPerMinute = 3;
+        private static readonly TimeSpan CallInterval = TimeSpan.FromSeconds(20); // 60 seconds / 3 calls = 20 seconds per call
+        private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1); // Only one concurrent call at a time
+        private static DateTime lastApiCallTime = DateTime.MinValue;
 
         public async static Task GenerateTranscription(Context context)
         {
@@ -90,21 +90,28 @@ namespace TeamScriber
 
                     while (!success && retryCount >= 0)
                     {
-                        // todo async work
-                        //await semaphore.WaitAsync();
+                        // Required to control Azure throtling async work
+                        if (context.Options.WhisperAzureThrottle)
+                            await semaphore.WaitAsync();
+
                         try
                         {
-                            // todo async work
-                            // Respect API rate limit
-                            //var timeSinceLastCall = DateTime.Now - lastApiCallTime;
-                            //if (timeSinceLastCall < CallInterval)
-                            //{
-                            //    var delay = CallInterval - timeSinceLastCall;
-                            //    Console.WriteLine($"Waiting for {delay.TotalSeconds} seconds due to rate limiting...");
+                            // Required to control Azure throtling async work
+                            if (context.Options.WhisperAzureThrottle)
+                            {
+                                // Respect API rate limit
+                                var timeSinceLastCall = DateTime.Now - lastApiCallTime;
+                                lastApiCallTime = DateTime.Now;
 
-                            //    // Let's remove this delay for now, as I am working with OpenAI directly for the moment
-                            //    await Task.Delay(delay);
-                            //}
+                                if (timeSinceLastCall < CallInterval)
+                                {
+                                    var delay = CallInterval - timeSinceLastCall;
+                                    Console.WriteLine($"Waiting for {delay.TotalSeconds} seconds due to rate limiting...");
+
+                                    // Let's remove this delay for now, as I am working with OpenAI directly for the moment
+                                    await Task.Delay(delay);
+                                }
+                            }
 
                             Console.WriteLine($"Transcribing chunk #{audioChunk.ID} of {audioChunks.Count}");
 
@@ -157,9 +164,11 @@ namespace TeamScriber
                         }
                         finally
                         {
-                            // todo async work
-                            // lastApiCallTime = DateTime.Now;
-                            // semaphore.Release();
+                            // Required to control Azure throtling async work
+                            if (context.Options.WhisperAzureThrottle)
+                            {
+                                semaphore.Release();
+                            }
                         }
 
                         --retryCount;

@@ -107,6 +107,7 @@ namespace TeamScriber.Wpf
             string apiKeyAnthropic = apiKeyAnthropicTextBox.Text;
             string model = ((ComboBoxItem)modelComboBox.SelectedItem).Content.ToString();
             string language = whisperLanguageTextBox.Text;
+            bool useWhisperAzureThrottling = useWhisperAzureThrottlingCheckBox.IsChecked ?? false;
             bool includeTimestamps = includeTimestampsCheckBox.IsChecked ?? false;
 
             string ffmpegPath = ffmpegPathTextBox.Text;
@@ -151,6 +152,8 @@ namespace TeamScriber.Wpf
 
             arguments += !string.IsNullOrEmpty(questionsOutputDirectory) ? $"-o \"{questionsOutputDirectory}\" " : "";
 
+            arguments += useWhisperAzureThrottling ? "--whisper-azure-throttle " : "";
+
             arguments += verbose ? "-v " : "";
 
             arguments += recordAudio ? "-r " : "";
@@ -168,6 +171,10 @@ namespace TeamScriber.Wpf
             try
             {
                 var args = ParseArguments(arguments);
+
+                Console.WriteLine($"Running TeamScriber with arguments: {arguments}\n");
+                Console.WriteLine();
+
                 await TeamScriber.CommandLine.Program.Main(args);
             }
             catch (Exception ex)

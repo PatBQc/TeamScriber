@@ -56,6 +56,15 @@ namespace TeamScriber
             """)]
         public string WhisperLanguage { get; set; }
 
+
+        [Option("whisper-azure-throttle", Required = false, Default = false,
+            HelpText =
+            """
+            Use this switch to throttle the number of requests to Azure Whisper API.  
+            It will respect the rate limit of no more then 3 calls per minute.
+            """)]
+        public bool WhisperAzureThrottle { get; set; }
+
         [Option('k', "openai-api-key", Required = false, Default = "",
             HelpText =
             """

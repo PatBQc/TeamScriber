@@ -59,6 +59,8 @@
 
                         <CheckBox Name="useWhisperCheckBox" Content="Use OpenAI Whisper for audio transcription" IsChecked="True" Margin="0,10,0,0"/>
 
+                        <CheckBox Name="useWhisperAzureThrottlingCheckBox" Content="Use Azure throttling limits" IsChecked="false" Margin="0,10,0,0"/>
+
                         <TextBlock Text="Whisper language (ISO-639-1 format)" Margin="0,10,0,0"/>
                         <TextBox Name="whisperLanguageTextBox" />
 
