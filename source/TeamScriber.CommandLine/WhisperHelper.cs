@@ -155,7 +155,8 @@ namespace TeamScriber
                         finally
                         {
                             lastApiCallTime = DateTime.Now;
-                            semaphore.Release();
+                            // todo async work
+                            // semaphore.Release();
                         }
 
                         --retryCount;
