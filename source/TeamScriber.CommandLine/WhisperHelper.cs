@@ -18,10 +18,11 @@ namespace TeamScriber
 {
     internal class WhisperHelper
     {
-        private const int MaxCallsPerMinute = 3;
-        private static readonly TimeSpan CallInterval = TimeSpan.FromSeconds(20); // 60 seconds / 3 calls = 20 seconds per call
-        private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1); // Only one concurrent call at a time
-        private static DateTime lastApiCallTime = DateTime.MinValue;
+        // todo async work
+        //private const int MaxCallsPerMinute = 3;
+        //private static readonly TimeSpan CallInterval = TimeSpan.FromSeconds(20); // 60 seconds / 3 calls = 20 seconds per call
+        //private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1); // Only one concurrent call at a time
+        //private static DateTime lastApiCallTime = DateTime.MinValue;
 
         public async static Task GenerateTranscription(Context context)
         {
@@ -89,9 +90,11 @@ namespace TeamScriber
 
                     while (!success && retryCount >= 0)
                     {
+                        // todo async work
                         //await semaphore.WaitAsync();
                         try
                         {
+                            // todo async work
                             // Respect API rate limit
                             //var timeSinceLastCall = DateTime.Now - lastApiCallTime;
                             //if (timeSinceLastCall < CallInterval)
@@ -154,8 +157,8 @@ namespace TeamScriber
                         }
                         finally
                         {
-                            lastApiCallTime = DateTime.Now;
                             // todo async work
+                            // lastApiCallTime = DateTime.Now;
                             // semaphore.Release();
                         }
 
