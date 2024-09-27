@@ -18,7 +18,6 @@ namespace TeamScriber
 {
     internal class WhisperHelper
     {
-
         private const int MaxCallsPerMinute = 3;
         private static readonly TimeSpan CallInterval = TimeSpan.FromSeconds(20); // 60 seconds / 3 calls = 20 seconds per call
         private static readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1); // Only one concurrent call at a time
@@ -65,10 +64,15 @@ namespace TeamScriber
                     {
                         outputDirectory = Directory.GetCurrentDirectory();
                     }
+                    else
+                    {
+                        Directory.CreateDirectory(outputDirectory);
+                    }
                     Console.WriteLine($"Output directory is not set. Defaulting to current directory: {outputDirectory}");
                 }
                 else
                 {
+                    Directory.CreateDirectory(outputDirectory);
                     Console.WriteLine($"Using configured output directory: {outputDirectory}");
                 }
 
@@ -85,19 +89,19 @@ namespace TeamScriber
 
                     while (!success && retryCount >= 0)
                     {
-                        await semaphore.WaitAsync();
+                        //await semaphore.WaitAsync();
                         try
                         {
                             // Respect API rate limit
-                            var timeSinceLastCall = DateTime.Now - lastApiCallTime;
-                            if (timeSinceLastCall < CallInterval)
-                            {
-                                var delay = CallInterval - timeSinceLastCall;
-                                Console.WriteLine($"Waiting for {delay.TotalSeconds} seconds due to rate limiting...");
+                            //var timeSinceLastCall = DateTime.Now - lastApiCallTime;
+                            //if (timeSinceLastCall < CallInterval)
+                            //{
+                            //    var delay = CallInterval - timeSinceLastCall;
+                            //    Console.WriteLine($"Waiting for {delay.TotalSeconds} seconds due to rate limiting...");
 
-                                // Let's remove this delay for now, as I am working with OpenAI directly for the moment
-                                // await Task.Delay(delay);
-                            }
+                            //    // Let's remove this delay for now, as I am working with OpenAI directly for the moment
+                            //    await Task.Delay(delay);
+                            //}
 
                             Console.WriteLine($"Transcribing chunk #{audioChunk.ID} of {audioChunks.Count}");
 

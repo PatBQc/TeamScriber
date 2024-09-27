@@ -51,6 +51,10 @@ namespace TeamScriber
                 {
                     outputDirectory = Path.GetDirectoryName(transcriptionFilename);
                 }
+                else
+                {
+                    Directory.CreateDirectory(outputDirectory);
+                }
 
                 var answersFilename = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(transcriptionFilename) + ".md");
 

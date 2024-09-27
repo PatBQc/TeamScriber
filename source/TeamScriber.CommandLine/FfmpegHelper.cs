@@ -40,6 +40,10 @@ namespace TeamScriber
                 {
                     outputDirectory = Path.GetDirectoryName(video);
                 }
+                else
+                {
+                    Directory.CreateDirectory(outputDirectory);
+                }
 
                 var audio = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(video) + ".m4a");
 

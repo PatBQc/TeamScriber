@@ -12,7 +12,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <!-- TabControl for Simple and Advanced modes -->
-        <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10,10,10,120" Grid.Row="0">
+        <TabControl HorizontalAlignment="Stretch" VerticalAlignment="Top" Margin="10,10,10,10" MaxHeight="300" Grid.Row="0">
             <!-- Simple Tab -->
             <TabItem Header="Simple">
                 <StackPanel Margin="10">
@@ -37,42 +37,69 @@
 
             <!-- Advanced Tab -->
             <TabItem Header="Advanced">
-                <StackPanel Margin="10">
-                    <TextBlock Text="Select a video or directory" />
+                <ScrollViewer>
+                    <StackPanel Margin="10">
+                        <TextBlock Text="Select a video or directory" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Name="videoPathTextBoxAdvanced" IsReadOnly="True" Grid.Column="0" Margin="0,0,10,0" />
+                            <Button Content="Choose a file" Click="OnSelectFileAdvanced" Grid.Column="1" Margin="0,0,10,0" />
+                            <Button Content="Choose a directory" Click="OnSelectDirectoryAdvanced" Grid.Column="2" />
+                        </Grid>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBox Name="videoPathTextBoxAdvanced" IsReadOnly="True" Grid.Column="0" Margin="0,0,10,0" />
-                        <Button Content="Choose a file or directory" Click="OnSelectFileAdvanced" Grid.Column="1"/>
-                    </Grid>
+                        <TextBlock Text="Audio output directory" Margin="0,10,0,0"/>
+                        <TextBox Name="audioPathTextBox" />
 
-                    
+                        <TextBlock Text="FFmpeg path" Margin="0,10,0,0"/>
+                        <TextBox Name="ffmpegPathTextBox" />
 
-                    <TextBlock Text="Audio output path" Margin="0,10,0,0"/>
-                    <TextBox Name="audioPathTextBox" />
+                        <CheckBox Name="useWhisperCheckBox" Content="Use OpenAI Whisper for audio transcription" IsChecked="True" Margin="0,10,0,0"/>
 
-                    <TextBlock Text="OpenAI API Key" Margin="0,10,0,0"/>
-                    <TextBox Name="apiKeyTextBox" />
+                        <TextBlock Text="Whisper language (ISO-639-1 format)" Margin="0,10,0,0"/>
+                        <TextBox Name="whisperLanguageTextBox" />
 
-                    <TextBlock Text="Transcription model" Margin="0,10,0,0"/>
-                    <ComboBox Name="modelComboBox" SelectedIndex="0">
-                        <ComboBoxItem Content="OpenAI:gpt-4"/>
-                        <ComboBoxItem Content="Anthropic:claude-3-5-sonnet-20240620"/>
-                    </ComboBox>
+                        <TextBlock Text="OpenAI API Key" Margin="0,10,0,0"/>
+                        <TextBox Name="apiKeyOpenAITextBox" />
 
-                    <TextBlock Text="Transcription language" Margin="0,10,0,0"/>
-                    <ComboBox Name="languageComboBoxAdvanced" SelectedIndex="0">
-                        <ComboBoxItem Content="Auto"/>
-                        <ComboBoxItem Content="French"/>
-                        <ComboBoxItem Content="English"/>
-                    </ComboBox>
+                        <TextBlock Text="OpenAI API Base Path" Margin="0,10,0,0"/>
+                        <TextBox Name="openAIBasePathTextBox" />
 
-                    <CheckBox Name="timestampsCheckbox" Content="Include timestamps in transcription" Margin="0,10,0,0"/>
-                    <Button Content="Start transcription" Click="OnTranscribeAdvanced" Margin="0,10,0,0"/>
-                </StackPanel>
+                        <TextBlock Text="Transcription output directory" Margin="0,10,0,0"/>
+                        <TextBox Name="transcriptionOutputDirectoryTextBox" />
+
+                        <CheckBox Name="usePromptsQueriesCheckBox" Content="Perform analysis on transcription using prompts" IsChecked="True" Margin="0,10,0,0"/>
+
+                        <TextBlock Text="Prompts file path or URL" Margin="0,10,0,0"/>
+                        <TextBox Name="promptsTextBox" Text="https://raw.githubusercontent.com/PatBQc/TeamScriber/main/prompts/prompts.txt" />
+
+                        <TextBlock Text="System prompts file path or URL" Margin="0,10,0,0"/>
+                        <TextBox Name="systemPromptsTextBox" Text="https://raw.githubusercontent.com/PatBQc/TeamScriber/main/prompts/promptSystem.txt" />
+
+                        <TextBlock Text="Model" Margin="0,10,0,0"/>
+                        <ComboBox Name="modelComboBox" SelectedIndex="0">
+                            <ComboBoxItem Content="Anthropic:claude-3-5-sonnet-20240620"/>
+                            <ComboBoxItem Content="OpenAI:gpt-4"/>
+                        </ComboBox>
+
+                        <TextBlock Text="Questions output directory" Margin="0,10,0,0"/>
+                        <TextBox Name="questionsOutputDirectoryTextBox" />
+
+                        <TextBlock Text="Anthropic API Key" Margin="0,10,0,0"/>
+                        <TextBox Name="apiKeyAnthropicTextBox" />
+
+                        <CheckBox Name="verboseCheckBox" Content="Display execution details" Margin="0,10,0,0"/>
+
+                        <CheckBox Name="recordAudioCheckBox" Content="Start by recording audio from default microphone and speaker" Margin="0,10,0,0"/>
+
+                        <CheckBox Name="includeTimestampsCheckBox" Content="Include timestamps in the Whisper transcription output" Margin="0,10,0,0"/>
+
+                        <Button Content="Start transcription" Click="OnTranscribeAdvanced" Margin="0,20,0,0"/>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
 

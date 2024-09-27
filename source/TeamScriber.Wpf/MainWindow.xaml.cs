@@ -24,6 +24,7 @@ namespace TeamScriber.Wpf
             InitializeComponent();
 
             Console.SetOut(new TextBoxWriter(logTextBox));
+            Console.SetError(new TextBoxWriter(logTextBox, @"/!\ ERROR"));
         }
 
         // Simple file selection
@@ -35,7 +36,7 @@ namespace TeamScriber.Wpf
             if (openFileDialog.ShowDialog() == true)
             {
                 videoPathTextBoxSimple.Text = openFileDialog.FileName;
-                logTextBox.Text += $"Selected file (Simple): {videoPathTextBoxSimple.Text}\n";
+                Console.WriteLine($"Selected file (Simple): {videoPathTextBoxSimple.Text}\n");
             }
         }
 
@@ -48,7 +49,19 @@ namespace TeamScriber.Wpf
             if (openFileDialog.ShowDialog() == true)
             {
                 videoPathTextBoxAdvanced.Text = openFileDialog.FileName;
-                logTextBox.Text += $"Selected file (Advanced): {videoPathTextBoxAdvanced.Text}\n";
+                Console.WriteLine($"Selected file (Advanced): {videoPathTextBoxAdvanced.Text}\n");
+            }
+        }
+
+        private void OnSelectDirectoryAdvanced(object sender, RoutedEventArgs e)
+        {
+            // Open folder dialog to select a directory
+            var dialog = new System.Windows.Forms.FolderBrowserDialog();
+            System.Windows.Forms.DialogResult result = dialog.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                videoPathTextBoxAdvanced.Text = dialog.SelectedPath;
+                Console.WriteLine($"Selected directory (Advanced): {videoPathTextBoxAdvanced.Text}\n");
             }
         }
 
@@ -90,20 +103,57 @@ namespace TeamScriber.Wpf
 
             // Get input values from the advanced mode UI
             string audioPath = audioPathTextBox.Text;
-            string apiKey = apiKeyTextBox.Text;
+            string apiKeyOpenAI = apiKeyOpenAITextBox.Text;
+            string apiKeyAnthropic = apiKeyAnthropicTextBox.Text;
             string model = ((ComboBoxItem)modelComboBox.SelectedItem).Content.ToString();
-            string language = GetLanguageCode(((ComboBoxItem)languageComboBoxAdvanced.SelectedItem).Content.ToString());
-            bool includeTimestamps = timestampsCheckbox.IsChecked ?? false;
+            string language = whisperLanguageTextBox.Text;
+            bool includeTimestamps = includeTimestampsCheckBox.IsChecked ?? false;
+
+            string ffmpegPath = ffmpegPathTextBox.Text;
+            bool useWhisper = useWhisperCheckBox.IsChecked ?? true;
+            string openAIBasePath = openAIBasePathTextBox.Text;
+            string transcriptionOutputDirectory = transcriptionOutputDirectoryTextBox.Text;
+            bool usePromptsQueries = usePromptsQueriesCheckBox.IsChecked ?? true;
+            string promptsPath = promptsTextBox.Text;
+            string systemPromptsPath = systemPromptsTextBox.Text;
+            string questionsOutputDirectory = questionsOutputDirectoryTextBox.Text;
+            bool verbose = verboseCheckBox.IsChecked ?? false;
+            bool recordAudio = recordAudioCheckBox.IsChecked ?? false;
 
             // Build the arguments string for the command-line tool
-            string arguments = $"-i \"{videoPathTextBoxAdvanced.Text}\" -a \"{audioPath}\" -k \"{apiKey}\" -m \"{model}\" ";
+            string arguments = $"-i \"{videoPathTextBoxAdvanced.Text}\" ";
 
-            if (language != null)
-            {
-                arguments += $"-l {language} ";
-            }
+            arguments += !string.IsNullOrEmpty(audioPath) ? $"-a \"{audioPath}\" " : "";
 
-            if (includeTimestamps) arguments += " --timestamps";
+            arguments += $"-m \"{model}\" ";
+
+            arguments += !string.IsNullOrEmpty(language) ? $"-l {language} " : "";
+
+            arguments += !string.IsNullOrEmpty(apiKeyOpenAI) ? $"-k {apiKeyOpenAI} " : "";
+
+            arguments += !string.IsNullOrEmpty(apiKeyAnthropic) ? $"-c {apiKeyAnthropic} " : "";
+
+            arguments += includeTimestamps ? "--timestamps " : "";
+
+            arguments += !string.IsNullOrEmpty(ffmpegPath) ? $"-f \"{ffmpegPath}\" " : "";
+
+            arguments += $"-w {useWhisper} ";
+
+            arguments += !string.IsNullOrEmpty(openAIBasePath) ? $"-b \"{openAIBasePath}\" " : "";
+
+            arguments += !string.IsNullOrEmpty(transcriptionOutputDirectory) ? $"-t \"{transcriptionOutputDirectory}\" " : "";
+
+            arguments += $"-q {usePromptsQueries} ";
+
+            arguments += !string.IsNullOrEmpty(promptsPath) ? $"-p \"{promptsPath}\" " : "";
+
+            arguments += !string.IsNullOrEmpty(systemPromptsPath) ? $"-s \"{systemPromptsPath}\" " : "";
+
+            arguments += !string.IsNullOrEmpty(questionsOutputDirectory) ? $"-o \"{questionsOutputDirectory}\" " : "";
+
+            arguments += verbose ? "-v " : "";
+
+            arguments += recordAudio ? "-r " : "";
 
             // Run TeamScriber with the generated arguments
             await Task.Run(async () =>
@@ -125,7 +175,7 @@ namespace TeamScriber.Wpf
                 // Update the logTextBox in case of an error
                 Application.Current.Dispatcher.Invoke(() =>
                 {
-                    logTextBox.Text += $"Error: {ex.Message}\n";
+                    Console.WriteLine($"Error: {ex.Message}\n");
                 });
             }
         }
