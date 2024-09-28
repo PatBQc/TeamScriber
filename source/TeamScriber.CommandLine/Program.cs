@@ -109,6 +109,11 @@ namespace TeamScriber.CommandLine
 
                 await HtmlHelper.GenerateHtml(context);
             }
+
+            if(context.Options.ImportInOneNote)
+            {
+                await OneNoteHelper.ImportInOneNote(context);
+            }
         }
 
         private static int GetMaxProgressValue(Context context)

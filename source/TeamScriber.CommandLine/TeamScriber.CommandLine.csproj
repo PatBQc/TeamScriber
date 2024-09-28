@@ -9,10 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.13.0-beta.2" />
     <PackageReference Include="Betalgo.OpenAI" Version="8.7.1" />
     <PackageReference Include="Betalgo.Ranul.Anthropic" Version="8.1.0" />
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="Markdig" Version="0.37.0" />
+    <PackageReference Include="Microsoft.Graph" Version="5.58.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.65.0" />
+    <PackageReference Include="Microsoft.Identity.Client.Broker" Version="4.65.0" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="NAudio.Lame" Version="2.1.0" />
     <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />

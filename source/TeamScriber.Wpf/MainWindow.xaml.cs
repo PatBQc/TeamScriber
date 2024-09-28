@@ -12,6 +12,12 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using TeamScriber.CommandLine;
+using Microsoft.Identity.Client;
+using Azure.Core;
+using Microsoft.Graph;
+using Azure.Identity;
+using Microsoft.Kiota.Abstractions.Authentication;
+using System.Net.Http;
 
 namespace TeamScriber.Wpf
 {
@@ -81,7 +87,7 @@ namespace TeamScriber.Wpf
             // Build the arguments string for the command-line tool
             string arguments = $"-i \"{videoPathTextBoxSimple.Text}\" -v ";
 
-            if(language != null)
+            if (language != null)
             {
                 arguments += $"-l {language} ";
             }
@@ -180,7 +186,7 @@ namespace TeamScriber.Wpf
                 {
                     Application.Current.Dispatcher.Invoke(() =>
                     {
-                        if(progressBar.Maximum != info.MaxValue)
+                        if (progressBar.Maximum != info.MaxValue)
                         {
                             progressBar.Maximum = info.MaxValue;
                         }

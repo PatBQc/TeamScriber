@@ -140,6 +140,14 @@ namespace TeamScriber
             """)]
         public string AnthropicAPIKey { get; set; }
 
+        [Option("import-onenote", Required = false, Default = true,
+            HelpText =
+            """
+            Do you want to import to OneNote?  It will create or use a notebook called "TeamScriber" and a section called "Imports".
+            Default is true.
+            """)]
+        public bool ImportInOneNote { get; set; }
+
         [Option('v', "verbose", Required = false, Default = false,
             HelpText =
             """
@@ -154,6 +162,8 @@ namespace TeamScriber
         [Option("timestamps", Required = false, Default = false,
             HelpText = "Include timestamps in the Whisper transcription output")]
         public bool IncludeTimestamps { get; set; }
+
+
 
         public static string GetUsage(string[] args)
         {

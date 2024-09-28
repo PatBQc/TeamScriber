@@ -19,10 +19,6 @@ namespace TeamScriber.CommandLine
 {
     internal class HtmlHelper
     {
-        private const string BaseFileSufixe = "-01-Base-MD-to-HTML";
-        private const string EmbedFileSufixe = "-02-Embeded-HTML";
-        private const string ChromePath = @"C:\Program Files\Google\Chrome\Application\chrome.exe";
-
         public async static Task GenerateHtml(Context context)
         {
             context.AnswersHtml01Base = new List<string>();
@@ -84,7 +80,7 @@ namespace TeamScriber.CommandLine
                     </html>
                     """;
 
-            var htmlFile = Path.Combine(Path.GetDirectoryName(answerFile), Path.GetFileNameWithoutExtension(answerFile) + BaseFileSufixe + ".html");
+            var htmlFile = Path.Combine(Path.GetDirectoryName(answerFile), Path.GetFileNameWithoutExtension(answerFile) + LogicConsts.BaseFileSufixe + ".html");
 
             await File.WriteAllTextAsync(htmlFile, html);
 
@@ -99,7 +95,7 @@ namespace TeamScriber.CommandLine
             using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless = true, 
-                ExecutablePath = ChromePath,
+                ExecutablePath = LogicConsts.ChromePath,
                 Args = new[] { "--headless=new", "--disable-gpu", "--window-position=-2400,-2400" }
             });
 
@@ -124,7 +120,7 @@ namespace TeamScriber.CommandLine
             // Get the fully rendered HTML
             var renderedHtml = await page.GetContentAsync();
 
-            string filename = htmlFile.Replace(BaseFileSufixe, EmbedFileSufixe);
+            string filename = htmlFile.Replace(LogicConsts.BaseFileSufixe, LogicConsts.EmbedFileSufixe);
 
             await File.WriteAllTextAsync(filename, renderedHtml);
 
