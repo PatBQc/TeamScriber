@@ -8,12 +8,12 @@ using System.Threading.Tasks;
 using NAudio.Wave;
 using NAudio.MediaFoundation;
 using System.IO;
-using Anthropic;
-using Anthropic.Services;
+using Betalgo.Anthropic;
+using Betalgo.Anthropic.Services;
 using OpenAI.Managers;
 using OpenAI.ObjectModels.RequestModels;
-using Anthropic.ApiModels.RequestModels;
-using Anthropic.ApiModels.SharedModels;
+using Betalgo.Anthropic.ApiModels.RequestModels;
+using Betalgo.Anthropic.ApiModels.SharedModels;
 using TeamScriber.CommandLine;
 
 namespace TeamScriber

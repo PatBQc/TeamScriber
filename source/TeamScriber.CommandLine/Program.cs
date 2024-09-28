@@ -12,7 +12,10 @@ namespace TeamScriber.CommandLine
     {
         public static async Task Main(string[] args)
         {
-            await Program.Main(args, null);
+            // await Program.Main(args, null);
+            var context = new Context();
+            context.AnswersMarkdown = new List<string>() { @"C:\temp\__delete__JRV-Nmedia\JRV-Nmedia (autres dossiers Azure)-20231116_093210-Enregistrement de la réunion.md" };
+            await HtmlHelper.GenerateHtml(context);
         }
 
         public static async Task Main(string[] args, IProgress<ProgressInfo>? progress)
