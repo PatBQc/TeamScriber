@@ -29,6 +29,8 @@ namespace TeamScriber
                 context.Options.OpenAIAPIKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
             }
 
+            context.Answers = new List<string>();
+
             var openAiOptions = new OpenAiOptions()
             {
                 ApiKey = context.Options.OpenAIAPIKey
@@ -63,6 +65,7 @@ namespace TeamScriber
                 }
 
                 var answersFilename = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(transcriptionFilename) + ".md");
+                context.Answers.Add(answersFilename);
 
                 int promptIndex = 0;
 

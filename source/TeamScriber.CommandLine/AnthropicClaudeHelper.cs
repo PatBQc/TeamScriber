@@ -31,6 +31,8 @@ namespace TeamScriber
                 context.Options.AnthropicAPIKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
             }
 
+            context.Answers = new List<string>();
+
             var anthropicAiService = new AnthropicService(new()
             {
                 ApiKey = context.Options.AnthropicAPIKey
@@ -61,6 +63,7 @@ namespace TeamScriber
                 }
 
                 var answersFilename = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(transcriptionFilename) + ".md");
+                context.Answers.Add(answersFilename);
 
                 int promptIndex = 0;
 

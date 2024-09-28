@@ -17,6 +17,8 @@ namespace TeamScriber
 
         public List<string> Transcriptions { get; set; }
 
+        public List<string> Answers { get; set; }
+
         public ProgressInfo ProgressInfo { get; set; }
 
         public IProgress<ProgressInfo> ProgressRepporter { get; set; }

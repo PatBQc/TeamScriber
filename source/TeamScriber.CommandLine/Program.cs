@@ -106,6 +106,8 @@ namespace TeamScriber.CommandLine
                         Environment.Exit(1);
                         break;
                 }
+
+                await HtmlHelper.GenerateHtml(context);
             }
         }
 
