@@ -98,8 +98,9 @@ namespace TeamScriber.CommandLine
             // Launch the browser, assuming it's path
             using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = true,
-                ExecutablePath = ChromePath
+                Headless = true, 
+                ExecutablePath = ChromePath,
+                Args = new[] { "--headless=new", "--disable-gpu", "--window-position=-2400,-2400" }
             });
 
             // Create a new page
@@ -142,25 +143,23 @@ namespace TeamScriber.CommandLine
             // Adjust if needed
             await Task.Delay(1000);
 
+            // Initialize Mermaid if not already initialized
+            await page.EvaluateExpressionAsync("mermaid.initialize({ startOnLoad: true });");
+
+            // Wait for all Mermaid diagrams to be rendered
+            await page.WaitForFunctionAsync("() => document.querySelectorAll('.mermaid svg').length === document.querySelectorAll('.mermaid').length");
+
+
             // Select all Mermaid elements
             var mermaidElements = await page.QuerySelectorAllAsync(".mermaid");
 
             foreach (var element in mermaidElements)
             {
-                // Take a screenshot of the Mermaid element
-                var screenshotData = await element.ScreenshotDataAsync(new ElementScreenshotOptions
-                {
-                    Type = ScreenshotType.Png
-                });
+                // Extract the SVG content from the Mermaid element
+                var svgContent = await element.EvaluateFunctionAsync<string>("(elem) => elem.innerHTML");
 
-                // Convert the screenshot to a Base64 string
-                var base64Image = Convert.ToBase64String(screenshotData);
-
-                // Replace the Mermaid element with an <img> tag
-                var imgTag = $"<img src=\"data:image/png;base64,{base64Image}\" />";
-
-                // Replace the element in the DOM
-                await element.EvaluateFunctionAsync("(elem, imgHtml) => { elem.outerHTML = imgHtml; }", imgTag);
+                // Embed the raw SVG content by replacing the Mermaid element
+                await element.EvaluateFunctionAsync("(elem, svg) => { elem.outerHTML = svg; }", svgContent);
             }
         }
 
