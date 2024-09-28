@@ -20,12 +20,20 @@ namespace TeamScriber.CommandLine
     {
         public async static Task GenerateHtml(Context context)
         {
+            await GenerateHtmlFromMarkdown(context);
+
+        }
+
+        private static async Task GenerateHtmlFromMarkdown(Context context)
+        {
+            context.AnswersHtml = new List<string>();
+
             var pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
                 .UseSoftlineBreakAsHardlineBreak()
                 .Build();
 
-            foreach (var answerFile in context.Answers)
+            foreach (var answerFile in context.AnswersMarkdown)
             {
                 var answer = await File.ReadAllTextAsync(answerFile);
 
@@ -62,6 +70,8 @@ namespace TeamScriber.CommandLine
 
                 var htmlFile = Path.ChangeExtension(answerFile, ".html");
                 await File.WriteAllTextAsync(htmlFile, html);
+
+                context.AnswersHtml.Add(htmlFile);
             }
         }
     }

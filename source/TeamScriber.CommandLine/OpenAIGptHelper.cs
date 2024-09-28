@@ -29,7 +29,7 @@ namespace TeamScriber
                 context.Options.OpenAIAPIKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
             }
 
-            context.Answers = new List<string>();
+            context.AnswersMarkdown = new List<string>();
 
             var openAiOptions = new OpenAiOptions()
             {
@@ -46,7 +46,7 @@ namespace TeamScriber
 
             var prompts = await PromptsHelper.GetPrompts(context);
 
-            double progressTranscriptionChunk = LogicConsts.ProgressWeightPromptQueries / (double) context.Transcriptions.Count;
+            double progressTranscriptionChunk = LogicConsts.ProgressWeightPromptQueries / (double)context.Transcriptions.Count;
             double progressTranscriptionChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightPromptQueries;
 
             foreach (var transcriptionFilename in context.Transcriptions)
@@ -65,13 +65,13 @@ namespace TeamScriber
                 }
 
                 var answersFilename = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(transcriptionFilename) + ".md");
-                context.Answers.Add(answersFilename);
+                context.AnswersMarkdown.Add(answersFilename);
 
                 int promptIndex = 0;
 
                 StringBuilder sb = new StringBuilder();
 
-                double progressPromptChunk = progressTranscriptionChunk / (double) prompts.Count;
+                double progressPromptChunk = progressTranscriptionChunk / (double)prompts.Count;
 
                 foreach (var prompt in prompts)
                 {
@@ -85,13 +85,17 @@ namespace TeamScriber
                         {
                             Console.WriteLine($"Asking prompt question #{promptIndex} of {prompts.Count} : {prompt}");
 
+                            var promptTitle = prompt.Split('|')[0];
+                            var promptText = prompt.Split('|')[1];
+
                             var answerResult = await openAiService.ChatCompletion.CreateCompletion(new ChatCompletionCreateRequest
                             {
                                 Model = model,
+                                MaxTokens = 4 * 1024,
                                 Messages = new List<ChatMessage>
                                 {
                                     ChatMessage.FromSystem(systemPrompt),
-                                    ChatMessage.FromUser(prompt)
+                                    ChatMessage.FromUser(promptText)
                                 }
                             });
 
@@ -99,7 +103,9 @@ namespace TeamScriber
                             {
                                 success = true;
                                 var answer = answerResult.Choices.First().Message.Content;
-                                sb.AppendLine("# " + prompt);
+                                sb.AppendLine("# " + promptTitle);
+                                sb.AppendLine();
+                                sb.AppendLine("*Prompt: " + promptText + "*");
                                 sb.AppendLine();
                                 sb.AppendLine(answer);
                                 sb.AppendLine();

@@ -31,7 +31,7 @@ namespace TeamScriber
                 context.Options.AnthropicAPIKey = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
             }
 
-            context.Answers = new List<string>();
+            context.AnswersMarkdown = new List<string>();
 
             var anthropicAiService = new AnthropicService(new()
             {
@@ -63,7 +63,7 @@ namespace TeamScriber
                 }
 
                 var answersFilename = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(transcriptionFilename) + ".md");
-                context.Answers.Add(answersFilename);
+                context.AnswersMarkdown.Add(answersFilename);
 
                 int promptIndex = 0;
 
@@ -83,12 +83,15 @@ namespace TeamScriber
                         {
                             Console.WriteLine($"Asking prompt question #{promptIndex} of {prompts.Count} : {prompt}");
 
+                            var promptTitle = prompt.Split('|')[0];
+                            var promptText = prompt.Split('|')[1];
+
                             var messageRequest = new MessageRequest
                             {
                                 Model = model,
                                 System = systemPrompt,
-                                Messages = [Message.FromUser(prompt)],
-                                MaxTokens = 4 * 1024
+                                Messages = [Message.FromUser(promptText)],
+                                MaxTokens = 8 * 1024
                             };
 
                             var answerResult = await anthropicAiService.Messages.Create(messageRequest);
@@ -97,7 +100,9 @@ namespace TeamScriber
                             {
                                 success = true;
                                 var answer = answerResult.ToString();
-                                sb.AppendLine("# " + prompt);
+                                sb.AppendLine("# " + promptTitle);
+                                sb.AppendLine();
+                                sb.AppendLine("*Prompt: " + promptText + "*");
                                 sb.AppendLine();
                                 sb.AppendLine(answer);
                                 sb.AppendLine();
