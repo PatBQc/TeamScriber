@@ -59,6 +59,7 @@ namespace TeamScriber
                     Console.WriteLine();
 
                     audio = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(video) + $"_{suffixe.ToString("0000")}.m4a");
+                    suffixe++;
                 }
 
                 // Execute ffmpeg command to split the audio from the video
