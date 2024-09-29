@@ -110,6 +110,7 @@ namespace TeamScriber
                                 sb.AppendLine(answer);
                                 sb.AppendLine();
                                 sb.AppendLine();
+                                sb.AppendLine();
 
                                 Console.WriteLine($"Answer received.");
 

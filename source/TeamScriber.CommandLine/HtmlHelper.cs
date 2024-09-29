@@ -14,6 +14,7 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 using static OpenAI.ObjectModels.StaticValues.AssistantsStatics.MessageStatics;
 using static OpenAI.ObjectModels.StaticValues.ImageStatics;
 using PuppeteerSharp;
+using Markdig.Extensions.AutoIdentifiers;
 
 namespace TeamScriber.CommandLine
 {
@@ -25,7 +26,7 @@ namespace TeamScriber.CommandLine
             context.AnswersHtml02Embed = new List<string>();
 
             // TODO optimize
-            
+
 
             foreach (var answerFile in context.AnswersMarkdown)
             {
@@ -44,14 +45,19 @@ namespace TeamScriber.CommandLine
         {
             var pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
+                .UseAutoIdentifiers(AutoIdentifierOptions.GitHub) // Generate ID based on the heading text
                 .UseSoftlineBreakAsHardlineBreak()
                 .Build();
 
             var answer = await File.ReadAllTextAsync(answerFile);
 
-            var html = Markdown.ToHtml(answer, pipeline);
+            var toc = GenerateTableOfContents(answer); // Generate TOC from Markdown content
 
-            html =
+            var htmlContent = Markdown.ToHtml(answer, pipeline);
+
+            htmlContent = htmlContent.Replace("<h1", "<br><br><br><h1");    
+
+            var html =
                 $$"""
                     <html>
                         <head>
@@ -71,8 +77,11 @@ namespace TeamScriber.CommandLine
                             <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
                         </head>
                         <body>
-                            <div class=""markdown-body"">
-                                {{html}}
+                            <div class="markdown-body">
+                                <h1>Table of Contents</h1>
+                                {{toc}}
+                                <br/><br/>
+                                {{htmlContent}}
                             </div>
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
@@ -94,7 +103,7 @@ namespace TeamScriber.CommandLine
             // Launch the browser, assuming it's path
             using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
-                Headless = true, 
+                Headless = true,
                 ExecutablePath = LogicConsts.MarkdownToHtmlChromePath,
                 Args = new[] { "--headless=new", "--disable-gpu", "--window-position=-2400,-2400" }
             });
@@ -136,7 +145,7 @@ namespace TeamScriber.CommandLine
             // Wait for Mermaid diagrams to render
             await page.WaitForNetworkIdleAsync();
 
-            // Adjust if needed
+            // Adjust if neededoc
             await Task.Delay(1000);
 
             // Initialize Mermaid if not already initialized
@@ -189,6 +198,31 @@ namespace TeamScriber.CommandLine
                     }
                 ");
         }
+
+        
+        private static string GenerateTableOfContents(string markdownContent)
+        {
+            // Simple regex to find headings (adjust as needed)
+            var tocBuilder = new StringBuilder();
+            tocBuilder.AppendLine("<ul>");
+
+            var lines = markdownContent.Split('\n');
+            foreach (var line in lines)
+            {
+                if (line.StartsWith("# ")) // Detect a heading (Markdown syntax)
+                {
+                    int level = line.TakeWhile(c => c == '#').Count(); // Determine heading level
+                    string headingText = line.TrimStart('#').Trim();
+                    string anchor = headingText.ToLower().Replace(" ", "-"); // Simple anchor generation (same as AutoIdentifiers)
+
+                    tocBuilder.AppendLine($"<li><a href=\"#{anchor}\">{headingText}</a></li>");
+                }
+            }
+
+            tocBuilder.AppendLine("</ul>");
+            return tocBuilder.ToString();
+        }
+
 
 
 

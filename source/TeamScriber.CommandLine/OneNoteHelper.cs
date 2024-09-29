@@ -2,15 +2,14 @@
 using Microsoft.Graph;
 using Microsoft.Identity.Client;
 using Microsoft.Kiota.Abstractions.Authentication;
-using SkiaSharp.Extended.Svg;
-using SkiaSharp;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata;
 using System.Text;
 using static System.Net.Mime.MediaTypeNames;
 using System.Security.Cryptography;
-
+using Svg.Skia;
+using SkiaSharp;
 
 namespace TeamScriber.CommandLine
 {
@@ -210,6 +209,17 @@ namespace TeamScriber.CommandLine
             HtmlDocument htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(pageContent);
 
+            // replace svg nodes with png instead
+            var svgNodes = htmlDocument.DocumentNode.SelectNodes("//svg");
+            foreach (var svgNode in svgNodes)
+            {
+                var svgImageText = svgNode.OuterHtml;
+                var pngImage = ConvertSvgToPng(svgImageText);
+                var pngBase64 = Convert.ToBase64String(pngImage);
+                var pngImageText = $"<img src=\"data:image/png;base64,{pngBase64}\" />";
+                svgNode.ParentNode.ReplaceChild(HtmlNode.CreateNode(pngImageText), svgNode);
+            }
+
             // Get the body node
             var bodyNode = htmlDocument.DocumentNode.SelectSingleNode("//body");
 
@@ -247,14 +257,18 @@ namespace TeamScriber.CommandLine
             }
         }
 
-        public byte[] ConvertSvgToPng(string svgImageText)
+        private static byte[] ConvertSvgToPng(string svgImageText)
         {
-            // Load the SVG
-            var svg = new SkiaSharp.Extended.Svg.SKSvg();
+            svgImageText = svgImageText.Replace("<br>", "");
+
+            // Convert SVG text to a byte stream
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(svgImageText));
+
+            // Load the SVG using Svg.Skia
+            var svg = new SKSvg();
             svg.Load(stream);
 
-            // Get the CullRect which represents the bounds of the SVG content
+            // Get the bounds of the SVG content
             var bounds = svg.Picture.CullRect;
 
             // Calculate the aspect ratio (width / height)
@@ -267,12 +281,13 @@ namespace TeamScriber.CommandLine
             // Create a bitmap with the desired dimensions
             using var bitmap = new SKBitmap(width, height);
             using var canvas = new SKCanvas(bitmap);
+
             // Set the background to transparent
             canvas.Clear(SKColors.Transparent);
 
             // Scale the SVG to fit the canvas
-            var scaleX = (float)width / svg.Picture.CullRect.Width;
-            var scaleY = (float)height / svg.Picture.CullRect.Height;
+            var scaleX = (float)width / bounds.Width;
+            var scaleY = (float)height / bounds.Height;
             var matrix = SKMatrix.CreateScale(scaleX, scaleY);
 
             // Draw the SVG onto the canvas
