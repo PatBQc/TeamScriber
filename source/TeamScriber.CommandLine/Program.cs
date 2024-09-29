@@ -12,13 +12,7 @@ namespace TeamScriber.CommandLine
     {
         public static async Task Main(string[] args)
         {
-            // await Program.Main(args, null);
-            var context = new Context();
-            context.ProgressRepporter = new Progress<ProgressInfo>();
-            context.ProgressInfo = new ProgressInfo();
-
-            context.AnswersHtml02Embed = new List<string>() { @"C:\temp\__delete__JRV-Nmedia\JRV-Nmedia (autres dossiers Azure)-20231116_093210-Enregistrement de la réunion-02-Embeded-HTML.html" };
-            await OneNoteHelper.ImportInOneNote(context);
+            await Program.Main(args, null);
         }
 
         public static async Task Main(string[] args, IProgress<ProgressInfo>? progress)
@@ -41,6 +35,8 @@ namespace TeamScriber.CommandLine
                     }
 
                     // Use options.TeamsVideoPaths, options.OutputPath, and options.Verbose variables here
+                    Console.WriteLine("# Starting TeamScriber...");
+                    Console.WriteLine();
                     Console.WriteLine($"File path: {options.TeamsVideoPaths}");
                     Console.WriteLine($"Output file path: {options.AudioOutputDirectory}");
                     Console.WriteLine($"Verbose mode: {options.Verbose}");
@@ -60,6 +56,7 @@ namespace TeamScriber.CommandLine
             context.ProgressRepporter = progress;
             context.ProgressInfo = progressInfo;
             context.ProgressInfo.MaxValue = 100; // temporary value, will be updated later
+
 
             if (context.Options.RecordAudio)
             {
@@ -120,6 +117,16 @@ namespace TeamScriber.CommandLine
             {
                 await OneNoteHelper.ImportInOneNote(context);
             }
+
+            Console.WriteLine("# Finished!");
+            Console.WriteLine();
+            Console.WriteLine("Congrats!  You Team session is now imported in OneNote!");
+            Console.WriteLine();
+            Console.WriteLine("If you liked it, please consider giving us a star on GitHub and share the news!");
+            Console.WriteLine();
+            Console.WriteLine("              -->    https://github.com/PatBQc/TeamScriber    <--");
+            Console.WriteLine();
+            Console.WriteLine();
         }
 
         private static int GetMaxProgressValue(Context context)

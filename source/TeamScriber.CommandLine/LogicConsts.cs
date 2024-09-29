@@ -9,6 +9,7 @@ namespace TeamScriber.CommandLine
     public static class LogicConsts
     {
         public static readonly TimeSpan AudioSegmentTime = new TimeSpan(0, 5, 0);
+        public static readonly string LineSeparator = new string('-', 80);
 
         public const int ProgressWeightAudioPerVideo = 4;
         public const int ProgressWeightWhisperConversion = 10;
