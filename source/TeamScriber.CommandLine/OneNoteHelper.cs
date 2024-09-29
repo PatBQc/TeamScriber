@@ -250,7 +250,7 @@ namespace TeamScriber.CommandLine
                 <html>
                 <head>
                     <title>{title}</title>
-                    <meta name=""created"" content=""{DateTime.Now.ToString("o")}"" />
+                    <meta name="created" content="{DateTime.Now.ToString("o")}" />
                 </head>
                 <body>
                     {bodyNode.InnerHtml}
