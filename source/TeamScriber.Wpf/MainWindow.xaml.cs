@@ -84,6 +84,12 @@ namespace TeamScriber.Wpf
             // Get the selected language
             string language = GetLanguageCode(((ComboBoxItem)languageComboBoxSimple.SelectedItem).Content.ToString());
 
+            if (language == "fr")
+            {
+                var prompt = "https://raw.githubusercontent.com/PatBQc/TeamScriber/refs/heads/main/prompts/prompts-fr.txt";
+                var systemPrompt = "https://raw.githubusercontent.com/PatBQc/TeamScriber/refs/heads/main/prompts/promptSystem-fr.txt";
+            }
+
             // Build the arguments string for the command-line tool
             string arguments = $"-i \"{videoPathTextBoxSimple.Text}\" -v ";
 

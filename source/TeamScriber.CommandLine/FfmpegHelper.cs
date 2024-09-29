@@ -51,6 +51,16 @@ namespace TeamScriber
 
                 var audio = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(video) + ".m4a");
 
+                var suffixe = 1;
+                while (File.Exists(audio))
+                {
+                    Console.WriteLine($"/!\\ Audio file already exists: {audio}");
+                    Console.WriteLine("Appending a suffixe to the file name");
+                    Console.WriteLine();
+
+                    audio = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(video) + $"_{suffixe.ToString("0000")}.m4a");
+                }
+
                 // Execute ffmpeg command to split the audio from the video
                 var processStartInfo = new ProcessStartInfo
                 {
