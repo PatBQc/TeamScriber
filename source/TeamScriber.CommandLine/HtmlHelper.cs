@@ -24,6 +24,9 @@ namespace TeamScriber.CommandLine
     {
         public async static Task GenerateHtml(Context context)
         {
+            Console.WriteLine("# Generating HTML from Markdown");
+            Console.WriteLine();
+
             context.AnswersHtml01Base = new List<string>();
             context.AnswersHtml02Embed = new List<string>();
 
@@ -35,12 +38,19 @@ namespace TeamScriber.CommandLine
                 Console.WriteLine($"Generating HTML for {answerFile}");
                 var htmlBaseFile = await GenerateHtmlFromMarkdown(answerFile, context);
                 context.AnswersHtml01Base.Add(htmlBaseFile);
+                Console.WriteLine($"    Generated in {htmlBaseFile}");
+                Console.WriteLine();
 
                 Console.WriteLine($"Embeding HTML for {htmlBaseFile}");
                 var htmlEmbedFile = await RenderHtmlAsync(htmlBaseFile, context);
                 context.AnswersHtml02Embed.Add(htmlEmbedFile);
+                Console.WriteLine($"    Generated in {htmlEmbedFile}");
+                Console.WriteLine();
             }
 
+            Console.WriteLine("--> Finished Generating HTML from Markdown");
+            Console.WriteLine();
+            Console.WriteLine();
         }
 
         private static async Task<string> GenerateHtmlFromMarkdown(string answerFile, Context context)

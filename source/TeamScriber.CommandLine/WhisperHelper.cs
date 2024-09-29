@@ -55,7 +55,9 @@ namespace TeamScriber
 
             foreach (var audio in context.Audios)
             {
-                Console.WriteLine($"Processing audio on file: {audio}");
+                Console.WriteLine($"# Processing audio");
+                Console.WriteLine();
+                Console.WriteLine("Audio file: {audio}");
                 Console.WriteLine();
 
                 var outputDirectory = context.Options.TranscriptionOutputDirectory;
@@ -71,11 +73,13 @@ namespace TeamScriber
                         Directory.CreateDirectory(outputDirectory);
                     }
                     Console.WriteLine($"Output directory is not set. Defaulting to current directory: {outputDirectory}");
+                    Console.WriteLine();
                 }
                 else
                 {
                     Directory.CreateDirectory(outputDirectory);
                     Console.WriteLine($"Using configured output directory: {outputDirectory}");
+                    Console.WriteLine();
                 }
 
                 var transcription = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(audio) + ".txt");
@@ -111,13 +115,14 @@ namespace TeamScriber
                                 {
                                     var delay = CallInterval - timeSinceLastCall;
                                     Console.WriteLine($"Waiting for {delay.TotalSeconds} seconds due to rate limiting...");
+                                    Console.WriteLine();
 
                                     // Let's remove this delay for now, as I am working with OpenAI directly for the moment
                                     await Task.Delay(delay);
                                 }
                             }
 
-                            Console.WriteLine($"Transcribing chunk #{audioChunk.ID} of {audioChunks.Count}");
+                            Console.WriteLine($"Launching transcription chunk #{audioChunk.ID} of {audioChunks.Count}");
 
                             var responseFormat = context.Options.IncludeTimestamps ? StaticValues.AudioStatics.ResponseFormat.Srt : StaticValues.AudioStatics.ResponseFormat.VerboseJson;
 
@@ -135,6 +140,7 @@ namespace TeamScriber
                                 success = true;
                                 audioChunk.Text = responseFormat == StaticValues.AudioStatics.ResponseFormat.Srt ? ExtractPlainText(audioResult.Text) : audioResult.Text;
                                 Console.WriteLine($"Transcription for chunk #{audioChunk.ID} of {audioChunks.Count} done.");
+                                Console.WriteLine();
                                 if (context.Options.Verbose)
                                 {
                                     Console.WriteLine($"Transcription for chunk {audioChunk.ID}:" + Environment.NewLine + audioChunk.Text);
@@ -189,7 +195,8 @@ namespace TeamScriber
                     }
                 }));
 
-                Console.WriteLine("Finished transcription of " + audio);
+                Console.WriteLine("--> Finished transcription of " + audio);
+                Console.WriteLine();
                 Console.WriteLine();
 
                 // Adjust timestamps before concatenation
@@ -248,7 +255,7 @@ namespace TeamScriber
 
                 while (currentPosition < reader.TotalTime)
                 {
-                    Console.WriteLine($"Splitting and converting audio to chunk #{segmentIndex + 1} of {estimatedChunks} to send to Whisper");
+                    Console.WriteLine($"Splitting and converting audio (m4a --> mp3) to chunk #{segmentIndex + 1} of {estimatedChunks} to send to Whisper later");
 
                     using (var segmentStream = new MemoryStream())
                     {
@@ -329,7 +336,7 @@ namespace TeamScriber
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error parsing SRT JSON response: {ex.Message}");
+                Console.WriteLine($"/!\\ Error parsing SRT JSON response: {ex.Message}");
             }
             return string.Empty;
         }

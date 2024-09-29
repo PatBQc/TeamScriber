@@ -16,16 +16,22 @@ namespace TeamScriber.Wpf
             _prefix = prefix;
         }
 
-        public override void Write(string value)
+        public override void WriteLine(string value)
         {
             string message = string.IsNullOrEmpty(_prefix) ? value : _prefix + " " + value;
-            base.Write(message);
+            base.WriteLine(message);
+
             // Make sure updates happen on the UI thread
             _textBox.Dispatcher.Invoke(() =>
             {
-                _textBox.AppendText(message);
+                _textBox.AppendText(message + Environment.NewLine);
                 _textBox.ScrollToEnd();  // Scrolls to the end after writing
             });
+        }
+
+        public override void WriteLine()
+        {
+            this.WriteLine(string.Empty);
         }
 
         public override Encoding Encoding => Encoding.UTF8;

@@ -10,6 +10,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Security.Cryptography;
 using Svg.Skia;
 using SkiaSharp;
+using Microsoft.IdentityModel.Tokens;
 
 namespace TeamScriber.CommandLine
 {
@@ -25,19 +26,29 @@ namespace TeamScriber.CommandLine
 
         public async static Task ImportInOneNote(Context context)
         {
+            Console.WriteLine("# Importing answers in OneNote");
+            Console.WriteLine();
+
             double progressTranscriptionChunk = LogicConsts.ProgressWeightOneNoteImport / ((double)context.AnswersHtml02Embed.Count + 2);
             double progressTranscriptionChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightOneNoteImport;
 
 
             // Get or create a notebook
+            Console.WriteLine("Getting or creating a notebook called TeamScriber...");
             var notebook = await GetOrCreateNotebookAsync("TeamScriber");
             context.ProgressInfo.Value += progressTranscriptionChunk;
             context.ProgressRepporter?.Report(context.ProgressInfo);
+            Console.WriteLine("     Found it with id: " + notebook.Id);
+            Console.WriteLine();
+
 
             // Get or create a section
+            Console.WriteLine("Getting or creating a section called Imports...");
             var section = await GetOrCreateSectionAsync(notebook.Id, "Imports");
             context.ProgressInfo.Value += progressTranscriptionChunk;
             context.ProgressRepporter?.Report(context.ProgressInfo);
+            Console.WriteLine("     Found it with id: " + section.Id);
+            Console.WriteLine();
 
 
             foreach (var answerFilename in context.AnswersHtml02Embed)
@@ -46,14 +57,21 @@ namespace TeamScriber.CommandLine
 
                 var title = Path.GetFileNameWithoutExtension(answerFilename).Replace(LogicConsts.MarkdownToHtmlEmbedFileSufixe, "");
 
+                Console.WriteLine($"Creating a page with content for \"{title}\"...");
                 // Create a page with content
                 await CreatePageWithContentAsync(notebook.Id, section.Id, title, answerContent);
                 context.ProgressInfo.Value += progressTranscriptionChunk;
                 context.ProgressRepporter?.Report(context.ProgressInfo);
+                Console.WriteLine("     Page created");
+                Console.WriteLine();
             }
 
             context.ProgressInfo.Value = progressTranscriptionChunksCompleted;
             context.ProgressRepporter?.Report(context.ProgressInfo);
+
+            Console.WriteLine("--> Finished import to OneNote");
+            Console.WriteLine();
+            Console.WriteLine();
         }
 
         public static IPublicClientApplication PublicClientApp

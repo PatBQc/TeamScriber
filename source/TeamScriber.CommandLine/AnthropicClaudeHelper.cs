@@ -49,7 +49,9 @@ namespace TeamScriber
                 var systemPrompt = await PromptsHelper.GetSystemPrompt(context);
                 systemPrompt += Environment.NewLine + Environment.NewLine + TranslationHelper.GetTranslation("en") + Environment.NewLine + transcription;
 
-                Console.WriteLine($"Generating answers: {transcriptionFilename}");
+                Console.WriteLine("# Answer generation through Anthropic Claude");
+                Console.WriteLine();
+                Console.WriteLine($"Generating answers for transcription: {transcriptionFilename}");
                 Console.WriteLine();
 
                 var outputDirectory = context.Options.QuestionsOutputDirectory;
@@ -107,15 +109,14 @@ namespace TeamScriber
                                 sb.AppendLine(answer);
                                 sb.AppendLine();
                                 sb.AppendLine();
-                                sb.AppendLine();
 
                                 Console.WriteLine($"Answer received.");
-
                                 if (context.Options.Verbose)
                                 {
                                     Console.WriteLine($"Answer is: {answer}");
                                     Console.WriteLine();
                                 }
+                                Console.WriteLine();
 
                                 context.ProgressInfo.Value += progressPromptChunk;
                                 context.ProgressRepporter?.Report(context.ProgressInfo);

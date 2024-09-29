@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TeamScriber.CommandLine;
 
 namespace TeamScriber
 {
@@ -32,6 +33,9 @@ namespace TeamScriber
 
             foreach (var video in context.Videos)
             {
+                Console.WriteLine();
+                Console.WriteLine("# Video processing to extract the audio");
+                Console.WriteLine();
                 Console.WriteLine($"Processing video: {video}");
                 Console.WriteLine();
 
@@ -60,12 +64,15 @@ namespace TeamScriber
 
                 Console.WriteLine("Launching: " + processStartInfo.FileName + " " + processStartInfo.Arguments);
                 Console.WriteLine();
+                Console.WriteLine();
 
+                Console.WriteLine(LogicConsts.LineSeparator);
+                Console.WriteLine("## FFMPEG log: ");
                 using var process = new Process();
                 if (context.Options.Verbose)
                 {
-                    process.OutputDataReceived += (sender, args) => Console.WriteLine(args.Data);
-                    process.ErrorDataReceived += (sender, args) => Console.WriteLine(args.Data);
+                    process.OutputDataReceived += (sender, args) => Console.WriteLine("    " + args.Data);
+                    process.ErrorDataReceived += (sender, args) => Console.WriteLine("    " + args.Data);
                 }
                 process.StartInfo = processStartInfo;
 
@@ -80,15 +87,23 @@ namespace TeamScriber
                 }
                 else
                 {
+                    Console.WriteLine();
                     Console.WriteLine(@"/!\ Error starting ffmpeg process.");
+                    Console.WriteLine();
                     Environment.Exit(0);
                 }
 
                 context.ProgressInfo.Value++;
                 context.ProgressRepporter?.Report(context.ProgressInfo);
 
-                Console.WriteLine($"Audio file generated: {audio}");
+                Console.WriteLine(LogicConsts.LineSeparator);
                 Console.WriteLine();
+                Console.WriteLine();
+
+                Console.WriteLine($"--> Audio file generated: {audio}");
+                Console.WriteLine();
+                Console.WriteLine();
+
                 context.Audios.Add(audio);
             }
         }
