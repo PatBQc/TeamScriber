@@ -17,6 +17,7 @@ using PuppeteerSharp;
 using Markdig.Extensions.AutoIdentifiers;
 using Svg;
 using System.Reflection.Metadata;
+using System.Text.RegularExpressions;
 
 namespace TeamScriber.CommandLine
 {
@@ -101,6 +102,14 @@ namespace TeamScriber.CommandLine
                     """;
 
             var htmlFile = Path.Combine(Path.GetDirectoryName(answerFile), Path.GetFileNameWithoutExtension(answerFile) + LogicConsts.MarkdownToHtmlBaseFileSufixe + ".html");
+
+            // Let's whitened the prompts
+            string pattern = @"(<em>Prompt:.*?</em>)";
+            
+            // Replace the matched text with the same content but with inline styling
+            string replacement = @"<em style=""color: #888;"">$1</em>";
+
+            html = Regex.Replace(html, pattern, replacement);
 
             await File.WriteAllTextAsync(htmlFile, html);
 

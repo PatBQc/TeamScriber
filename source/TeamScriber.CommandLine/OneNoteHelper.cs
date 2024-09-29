@@ -309,7 +309,7 @@ namespace TeamScriber.CommandLine
             if (level > 0)
             {
                 // Let's take some time to reflect on life mystery, like the time it might take to get from an API call to the next where you ressource is ready
-                Task.Delay(2000);
+                Task.Delay(5000);
 
                 var responseText = await response.Content.ReadAsStringAsync();
 
