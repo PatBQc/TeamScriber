@@ -80,7 +80,7 @@ namespace TeamScriber.CommandLine
                     </html>
                     """;
 
-            var htmlFile = Path.Combine(Path.GetDirectoryName(answerFile), Path.GetFileNameWithoutExtension(answerFile) + LogicConsts.BaseFileSufixe + ".html");
+            var htmlFile = Path.Combine(Path.GetDirectoryName(answerFile), Path.GetFileNameWithoutExtension(answerFile) + LogicConsts.MarkdownToHtmlBaseFileSufixe + ".html");
 
             await File.WriteAllTextAsync(htmlFile, html);
 
@@ -95,7 +95,7 @@ namespace TeamScriber.CommandLine
             using var browser = await Puppeteer.LaunchAsync(new LaunchOptions
             {
                 Headless = true, 
-                ExecutablePath = LogicConsts.ChromePath,
+                ExecutablePath = LogicConsts.MarkdownToHtmlChromePath,
                 Args = new[] { "--headless=new", "--disable-gpu", "--window-position=-2400,-2400" }
             });
 
@@ -120,7 +120,7 @@ namespace TeamScriber.CommandLine
             // Get the fully rendered HTML
             var renderedHtml = await page.GetContentAsync();
 
-            string filename = htmlFile.Replace(LogicConsts.BaseFileSufixe, LogicConsts.EmbedFileSufixe);
+            string filename = htmlFile.Replace(LogicConsts.MarkdownToHtmlBaseFileSufixe, LogicConsts.MarkdownToHtmlEmbedFileSufixe);
 
             await File.WriteAllTextAsync(filename, renderedHtml);
 

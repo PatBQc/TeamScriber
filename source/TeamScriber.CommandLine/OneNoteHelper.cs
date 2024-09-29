@@ -37,7 +37,7 @@ namespace TeamScriber.CommandLine
             {
                 var answerContent = await File.ReadAllTextAsync(answerFilename);
 
-                var title = Path.GetFileNameWithoutExtension(answerFilename).Replace(LogicConsts.EmbedFileSufixe, "");
+                var title = Path.GetFileNameWithoutExtension(answerFilename).Replace(LogicConsts.MarkdownToHtmlEmbedFileSufixe, "");
 
                 // Create a page with content
                 await CreatePageWithContentAsync(notebook.Id, section.Id, title, answerContent);
@@ -55,9 +55,9 @@ namespace TeamScriber.CommandLine
             {
                 if (_clientApp == null)
                 {
-                    _clientApp = PublicClientApplicationBuilder.Create(LogicConsts.clientId)
-                        .WithAuthority(AzureCloudInstance.AzurePublic, LogicConsts.tenantIdCommon)
-                        .WithRedirectUri(LogicConsts.redirectURI)
+                    _clientApp = PublicClientApplicationBuilder.Create(LogicConsts.MicrosoftGraphClientId)
+                        .WithAuthority(AzureCloudInstance.AzurePublic, LogicConsts.MicrosoftGraphTenantIdCommon)
+                        .WithRedirectUri(LogicConsts.MicrosoftGraphRedirectURI)
                         .Build();
                 }
 
@@ -78,7 +78,7 @@ namespace TeamScriber.CommandLine
 
                     try
                     {
-                        authResult = await app.AcquireTokenSilent(LogicConsts.scopes, firstAccount)
+                        authResult = await app.AcquireTokenSilent(LogicConsts.MicrosoftGraphScopes, firstAccount)
                             .ExecuteAsync();
                     }
                     catch (MsalUiRequiredException ex)
@@ -89,7 +89,7 @@ namespace TeamScriber.CommandLine
 
                         try
                         {
-                            authResult = await app.AcquireTokenInteractive(LogicConsts.scopes)
+                            authResult = await app.AcquireTokenInteractive(LogicConsts.MicrosoftGraphScopes)
                                 .WithAccount(accounts.FirstOrDefault())
                                 .WithPrompt(Prompt.SelectAccount)
                                 .ExecuteAsync();
