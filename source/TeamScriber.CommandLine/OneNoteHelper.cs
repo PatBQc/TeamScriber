@@ -2,11 +2,15 @@
 using Microsoft.Graph;
 using Microsoft.Identity.Client;
 using Microsoft.Kiota.Abstractions.Authentication;
+using SkiaSharp.Extended.Svg;
+using SkiaSharp;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection.Metadata;
 using System.Text;
 using static System.Net.Mime.MediaTypeNames;
+using System.Security.Cryptography;
+
 
 namespace TeamScriber.CommandLine
 {
@@ -73,48 +77,76 @@ namespace TeamScriber.CommandLine
         {
             if (graphClient == null)
             {
+
+                AuthenticationResult authResult = null;
+                var app = PublicClientApp;
+
+                var accounts = await app.GetAccountsAsync();
+                var firstAccount = accounts.FirstOrDefault();
+
+                // Let's try to get a token silently
+                try
                 {
-                    AuthenticationResult authResult = null;
-                    var app = PublicClientApp;
+                    authResult = await app.AcquireTokenSilent(LogicConsts.MicrosoftGraphScopes, firstAccount)
+                        .ExecuteAsync();
 
-                    var accounts = await app.GetAccountsAsync();
-                    var firstAccount = accounts.FirstOrDefault();
+                    // extract the token from the result
+                    accessToken = authResult.AccessToken;
 
-                    try
-                    {
-                        authResult = await app.AcquireTokenSilent(LogicConsts.MicrosoftGraphScopes, firstAccount)
-                            .ExecuteAsync();
-                    }
-                    catch (MsalUiRequiredException ex)
-                    {
-                        // A MsalUiRequiredException happened on AcquireTokenSilent.
-                        // This indicates you need to call AcquireTokenInteractive to acquire a token
-                        System.Diagnostics.Debug.WriteLine($"MsalUiRequiredException: {ex.Message}");
+                    var authProvider = new BaseBearerTokenAuthenticationProvider(new TokenProvider(accessToken));
+                    graphClient = new GraphServiceClient(authProvider);
+                    return graphClient;
+                }
+                catch (MsalUiRequiredException ex)
+                {
+                    // A MsalUiRequiredException happened on AcquireTokenSilent.
+                    // This indicates you need to call AcquireTokenInteractive to acquire a token
+                    Console.WriteLine($"MsalUiRequiredException: {ex.Message}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Microsoft Graph Login Result: Error Acquiring Token Silently:{System.Environment.NewLine}{ex}");
+                }
 
-                        try
-                        {
-                            authResult = await app.AcquireTokenInteractive(LogicConsts.MicrosoftGraphScopes)
-                                .WithAccount(accounts.FirstOrDefault())
-                                .WithPrompt(Prompt.SelectAccount)
-                                .ExecuteAsync();
+                //Let's try our saved token in the file before prompting the user
+                try
+                {
+                    string encryptedToken = File.ReadAllText(LogicConsts.MicrosoftGraphTokenFilename);
+                    accessToken = DecryptToken(encryptedToken);
+                    var authProvider = new BaseBearerTokenAuthenticationProvider(new TokenProvider(accessToken));
+                    var client = new GraphServiceClient(authProvider);
 
-                            accessToken = authResult.AccessToken;
+                    // Simple call on the graph to validate the token
+                    var me = await client.Me.GetAsync();
+                    graphClient = client;
 
-                            var authProvider = new BaseBearerTokenAuthenticationProvider(new TokenProvider(accessToken));
-                            graphClient = new GraphServiceClient(authProvider);
+                    return graphClient;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error decrypting token: {ex.Message}");
+                }
 
-                            var foo = await GetOrCreateNotebookAsync("TeamScriber");
-                        }
-                        catch (MsalException msalex)
-                        {
-                            Console.WriteLine($"Microsoft Graph Login Result: Error Acquiring Token:{System.Environment.NewLine}{msalex}");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Microsoft Graph Login Result: Error Acquiring Token Silently:{System.Environment.NewLine}{ex}");
-                        return null;
-                    }
+                // Final option: prompt the user to sign-in
+                try
+                {
+                    authResult = await app.AcquireTokenInteractive(LogicConsts.MicrosoftGraphScopes)
+                        .WithAccount(accounts.FirstOrDefault())
+                        .WithPrompt(Prompt.SelectAccount)
+                        .ExecuteAsync();
+
+                    accessToken = authResult.AccessToken;
+
+                    string encryptedToken = EncryptToken(accessToken);
+                    File.WriteAllText(LogicConsts.MicrosoftGraphTokenFilename, encryptedToken);
+                    File.Encrypt(LogicConsts.MicrosoftGraphTokenFilename);
+
+                    var authProvider = new BaseBearerTokenAuthenticationProvider(new TokenProvider(accessToken));
+                    graphClient = new GraphServiceClient(authProvider);
+                }
+                catch (MsalException msalex)
+                {
+                    Console.WriteLine($"Microsoft Graph Login Result: Error Acquiring Token:{System.Environment.NewLine}{msalex}");
                 }
             }
 
@@ -127,7 +159,7 @@ namespace TeamScriber.CommandLine
 
             // Check if the notebook already exists
             var notebooks = await client.Me.Onenote.Notebooks
-                .GetAsync( requestConfiguration => 
+                .GetAsync(requestConfiguration =>
                 {
                     requestConfiguration.QueryParameters.Filter = $"displayName eq '{name}'";
                 });
@@ -181,7 +213,7 @@ namespace TeamScriber.CommandLine
             // Get the body node
             var bodyNode = htmlDocument.DocumentNode.SelectSingleNode("//body");
 
-            var htmlContent = 
+            var htmlContent =
                 $"""
                 <!DOCTYPE html>
                 <html>
@@ -215,6 +247,64 @@ namespace TeamScriber.CommandLine
             }
         }
 
+        public byte[] ConvertSvgToPng(string svgImageText)
+        {
+            // Load the SVG
+            var svg = new SkiaSharp.Extended.Svg.SKSvg();
+            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(svgImageText));
+            svg.Load(stream);
+
+            // Get the CullRect which represents the bounds of the SVG content
+            var bounds = svg.Picture.CullRect;
+
+            // Calculate the aspect ratio (width / height)
+            float aspectRatio = bounds.Width / bounds.Height;
+
+            // Set the desired width and height
+            int width = 2048;
+            int height = (int)(width / aspectRatio);
+
+            // Create a bitmap with the desired dimensions
+            using var bitmap = new SKBitmap(width, height);
+            using var canvas = new SKCanvas(bitmap);
+            // Set the background to transparent
+            canvas.Clear(SKColors.Transparent);
+
+            // Scale the SVG to fit the canvas
+            var scaleX = (float)width / svg.Picture.CullRect.Width;
+            var scaleY = (float)height / svg.Picture.CullRect.Height;
+            var matrix = SKMatrix.CreateScale(scaleX, scaleY);
+
+            // Draw the SVG onto the canvas
+            canvas.DrawPicture(svg.Picture, ref matrix);
+
+            // Save the result as a PNG file
+            using var image = SKImage.FromBitmap(bitmap);
+            using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+            using var outputStream = new MemoryStream();
+            data.SaveTo(outputStream);
+
+            return outputStream.ToArray();
+        }
+
+
+        public static string EncryptToken(string token)
+        {
+            byte[] encryptedData = ProtectedData.Protect(
+                Encoding.UTF8.GetBytes(token),
+                null,
+                DataProtectionScope.CurrentUser);
+            return Convert.ToBase64String(encryptedData);
+        }
+
+        public static string DecryptToken(string encryptedToken)
+        {
+            byte[] decryptedData = ProtectedData.Unprotect(
+                Convert.FromBase64String(encryptedToken),
+                null,
+                DataProtectionScope.CurrentUser);
+            return Encoding.UTF8.GetString(decryptedData);
+        }
 
     }
 }
