@@ -24,6 +24,7 @@ namespace TeamScriber.CommandLine
         public const string MicrosoftGraphClientSecret = "MY-SECRET"; // Client secret 
         public const string MicrosoftGraphTenantIdCommon = "common";     // Directory (tenant) ID 
         public const string MicrosoftGraphRedirectURI = "http://localhost";
+        public const string MicrosoftGraphTokenFilename = ".\\token.dat";
 
         //Set the scope for API call to user.read
         public static readonly string[] MicrosoftGraphScopes = new string[]
