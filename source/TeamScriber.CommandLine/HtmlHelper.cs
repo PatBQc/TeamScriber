@@ -92,7 +92,6 @@ namespace TeamScriber.CommandLine
                             <div class="markdown-body">
                                 <h1>Table of Contents</h1>
                                 {{toc}}
-                                <br/><br/>
                                 {{htmlContent}}
                             </div>
                             <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
