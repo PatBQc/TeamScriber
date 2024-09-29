@@ -145,6 +145,11 @@ namespace TeamScriber.CommandLine
                 steps += LogicConsts.ProgressWeightPromptQueries; // Step to generate answers using prompts
             }
 
+            if(context.Options.ImportInOneNote)
+            {
+                steps += LogicConsts.ProgressWeightOneNoteImport; // Step to import to OneNote
+            }
+
             return steps;
         }
     }

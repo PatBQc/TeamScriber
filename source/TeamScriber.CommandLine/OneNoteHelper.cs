@@ -18,11 +18,20 @@ namespace TeamScriber.CommandLine
 
         public async static Task ImportInOneNote(Context context)
         {
+            double progressTranscriptionChunk = LogicConsts.ProgressWeightOneNoteImport / ((double)context.AnswersHtml02Embed.Count + 2);
+            double progressTranscriptionChunksCompleted = context.ProgressInfo.Value + LogicConsts.ProgressWeightOneNoteImport;
+
+
             // Get or create a notebook
             var notebook = await GetOrCreateNotebookAsync("TeamScriber");
+            context.ProgressInfo.Value += progressTranscriptionChunk;
+            context.ProgressRepporter?.Report(context.ProgressInfo);
 
             // Get or create a section
             var section = await GetOrCreateSectionAsync(notebook.Id, "Imports");
+            context.ProgressInfo.Value += progressTranscriptionChunk;
+            context.ProgressRepporter?.Report(context.ProgressInfo);
+
 
             foreach (var answerFilename in context.AnswersHtml02Embed)
             {
@@ -32,7 +41,12 @@ namespace TeamScriber.CommandLine
 
                 // Create a page with content
                 await CreatePageWithContentAsync(notebook.Id, section.Id, title, answerContent);
+                context.ProgressInfo.Value += progressTranscriptionChunk;
+                context.ProgressRepporter?.Report(context.ProgressInfo);
             }
+
+            context.ProgressInfo.Value = progressTranscriptionChunksCompleted;
+            context.ProgressRepporter?.Report(context.ProgressInfo);
         }
 
         public static IPublicClientApplication PublicClientApp

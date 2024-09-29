@@ -13,6 +13,7 @@ namespace TeamScriber.CommandLine
         public const int ProgressWeightAudioPerVideo = 4;
         public const int ProgressWeightWhisperConversion = 10;
         public const int ProgressWeightPromptQueries = 10;
+        public const int ProgressWeightOneNoteImport = 2;
 
         public const string BaseFileSufixe = "-01-Base-MD-to-HTML";
         public const string EmbedFileSufixe = "-02-Embeded-HTML";
@@ -20,8 +21,8 @@ namespace TeamScriber.CommandLine
 
         public const string clientId = "MY-SECRET";     // Application (client) ID 
         public const string tenantId = "MY-SECRET";     // Directory (tenant) ID 
-        public const string tenantIdCommon = "common";     // Directory (tenant) ID 
         public const string clientSecret = "MY-SECRET"; // Client secret 
+        public const string tenantIdCommon = "common";     // Directory (tenant) ID 
         public const string redirectURI = "http://localhost";
 
         //Set the scope for API call to user.read
