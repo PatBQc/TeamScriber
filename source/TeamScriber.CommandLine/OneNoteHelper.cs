@@ -1,8 +1,12 @@
-﻿using Microsoft.Graph;
+﻿using HtmlAgilityPack;
+using Microsoft.Graph;
 using Microsoft.Identity.Client;
 using Microsoft.Kiota.Abstractions.Authentication;
+using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata;
 using System.Text;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TeamScriber.CommandLine
 {
@@ -169,38 +173,37 @@ namespace TeamScriber.CommandLine
             return await client.Me.Onenote.Notebooks[notebookId].Sections.PostAsync(newSection);
         }
 
-        private static async Task CreatePageWithContentAsync(string notebookId, string sectionId, string title, string content)
+        private static async Task CreatePageWithContentAsync(string notebookId, string sectionId, string title, string pageContent)
         {
-            var client = await GetAuthenticatedClient();
+            HtmlDocument htmlDocument = new HtmlDocument();
+            htmlDocument.LoadHtml(pageContent);
 
-            var boundary = "MyPartBoundary" + new Random().Next(1000, 9999).ToString();
+            // Get the body node
+            var bodyNode = htmlDocument.DocumentNode.SelectSingleNode("//body");
 
             var htmlContent = 
-                $@"""
+                $"""
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <title>{title}</title>
+                    <meta name=""created"" content=""{DateTime.Now.ToString("o")}"" />
                 </head>
                 <body>
-                    {content}
+                    {bodyNode.InnerHtml}
                 </body>
                 </html>
                 """;
 
-            var body = $"--{boundary}\r\n" +
-                       "Content-Disposition: form-data; name=\"Presentation\"\r\n" +
-                       "Content-Type: text/html\r\n\r\n" +
-                       $"{htmlContent}\r\n" +
-                       $"--{boundary}--\r\n";
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-            using var clientHttp = new HttpClient();
-            clientHttp.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var content = new MultipartFormDataContent("boundary-" + Guid.NewGuid().ToString());
+            content.Add(new StringContent(htmlContent, Encoding.UTF8, "text/html"), "Presentation");
 
-            var contentHttp = new StringContent(body, Encoding.UTF8, "application/xhtml+xml");
-            var response = await clientHttp.PostAsync(
+            var response = await client.PostAsync(
                 $"https://graph.microsoft.com/v1.0/me/onenote/sections/{sectionId}/pages",
-                contentHttp
+                content
             );
 
             response.EnsureSuccessStatusCode();
