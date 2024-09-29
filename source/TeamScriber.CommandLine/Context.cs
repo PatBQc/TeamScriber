@@ -20,6 +20,7 @@ namespace TeamScriber
         public List<string> AnswersMarkdown { get; set; }
 
         public List<string> AnswersHtml01Base { get; set; }
+
         public List<string> AnswersHtml02Embed { get; set; }
 
         public ProgressInfo ProgressInfo { get; set; }

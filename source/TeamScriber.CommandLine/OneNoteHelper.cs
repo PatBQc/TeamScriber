@@ -11,6 +11,7 @@ using System.Security.Cryptography;
 using Svg.Skia;
 using SkiaSharp;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 
 namespace TeamScriber.CommandLine
 {
@@ -50,7 +51,7 @@ namespace TeamScriber.CommandLine
             Console.WriteLine("     Found it with id: " + section.Id);
             Console.WriteLine();
 
-
+            int fileIndex = 0;
             foreach (var answerFilename in context.AnswersHtml02Embed)
             {
                 var answerContent = await File.ReadAllTextAsync(answerFilename);
@@ -60,10 +61,19 @@ namespace TeamScriber.CommandLine
                 Console.WriteLine($"Creating a page with content for \"{title}\"...");
                 // Create a page with content
                 await CreatePageWithContentAsync(notebook.Id, section.Id, title, answerContent);
-                context.ProgressInfo.Value += progressTranscriptionChunk;
-                context.ProgressRepporter?.Report(context.ProgressInfo);
                 Console.WriteLine("     Page created");
                 Console.WriteLine();
+
+                Console.WriteLine($"Appending sub page with original transcription...");
+                var transcription = await File.ReadAllTextAsync(context.Transcriptions[fileIndex]);
+                await CreatePageWithContentAsync(notebook.Id, section.Id, "Transcription", transcription, 1);
+                Console.WriteLine("     Page created");
+                Console.WriteLine();
+
+                context.ProgressInfo.Value += progressTranscriptionChunk;
+                context.ProgressRepporter?.Report(context.ProgressInfo);
+
+                ++fileIndex;
             }
 
             context.ProgressInfo.Value = progressTranscriptionChunksCompleted;
@@ -222,7 +232,7 @@ namespace TeamScriber.CommandLine
             return await client.Me.Onenote.Notebooks[notebookId].Sections.PostAsync(newSection);
         }
 
-        private static async Task CreatePageWithContentAsync(string notebookId, string sectionId, string title, string pageContent)
+        private static async Task CreatePageWithContentAsync(string notebookId, string sectionId, string title, string pageContent, int level = 0)
         {
             HtmlDocument htmlDocument = new HtmlDocument();
             htmlDocument.LoadHtml(pageContent);
@@ -243,6 +253,18 @@ namespace TeamScriber.CommandLine
 
             // Get the body node
             var bodyNode = htmlDocument.DocumentNode.SelectSingleNode("//body");
+            var innerHtml = string.Empty;
+
+            // If we received raw text or an not conform html 
+            if (bodyNode == null)
+            {
+
+                innerHtml = System.Web.HttpUtility.HtmlEncode(pageContent);
+            }
+            else
+            {
+                innerHtml = bodyNode.InnerHtml;
+            }
 
             var htmlContent =
                 $"""
@@ -253,7 +275,7 @@ namespace TeamScriber.CommandLine
                     <meta name="created" content="{DateTime.Now.ToString("o")}" />
                 </head>
                 <body>
-                    {bodyNode.InnerHtml}
+                    {innerHtml}
                 </body>
                 </html>
                 """;
@@ -274,7 +296,29 @@ namespace TeamScriber.CommandLine
             if (!response.IsSuccessStatusCode)
             {
                 var errorText = await response.Content.ReadAsStringAsync();
+                Console.Out.WriteLine("/!\\ Error creating OneNote Page: " + errorText);
                 throw new Exception($"HTTP error! Status: {response.StatusCode}, Message: {errorText}");
+            }
+
+            if (level > 0)
+            {
+                var responseText = await response.Content.ReadAsStringAsync();
+
+                // Parse the JSON string
+                JObject jsonObject = JObject.Parse(responseText);
+
+                string id = jsonObject["id"].ToString();
+                var contentLevel = new StringContent("{\"level\": " + level + "}", Encoding.UTF8, "application/json");
+                var responseLevel = await client.PatchAsync($"https://graph.microsoft.com/v1.0/me/onenote/pages/{id}", contentLevel);
+
+                responseLevel.EnsureSuccessStatusCode();
+
+                if (!responseLevel.IsSuccessStatusCode)
+                {
+                    var errorText = await response.Content.ReadAsStringAsync();
+                    Console.Out.WriteLine("/!\\ Error creating OneNote Page: " + errorText);
+                    throw new Exception($"HTTP error! Status: {response.StatusCode}, Message: {errorText}");
+                }
             }
         }
 
