@@ -70,6 +70,12 @@ namespace TeamScriber.CommandLine
                 Console.WriteLine("     Page created");
                 Console.WriteLine();
 
+                Console.WriteLine($"Appending sub page with markdown...");
+                var markdown = await File.ReadAllTextAsync(context.AnswersMarkdown[fileIndex]);
+                await CreatePageWithContentAsync(notebook.Id, section.Id, "Markdown", markdown, 1);
+                Console.WriteLine("     Page created");
+                Console.WriteLine();
+
                 context.ProgressInfo.Value += progressTranscriptionChunk;
                 context.ProgressRepporter?.Report(context.ProgressInfo);
 
@@ -302,6 +308,9 @@ namespace TeamScriber.CommandLine
 
             if (level > 0)
             {
+                // Let's take some time to reflect on life mystery, like the time it might take to get from an API call to the next where you ressource is ready
+                Task.Delay(2000);
+
                 var responseText = await response.Content.ReadAsStringAsync();
 
                 // Parse the JSON string
