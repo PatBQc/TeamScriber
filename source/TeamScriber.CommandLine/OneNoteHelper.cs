@@ -211,13 +211,16 @@ namespace TeamScriber.CommandLine
 
             // replace svg nodes with png instead
             var svgNodes = htmlDocument.DocumentNode.SelectNodes("//svg");
-            foreach (var svgNode in svgNodes)
+            if (svgNodes != null)
             {
-                var svgImageText = svgNode.OuterHtml;
-                var pngImage = ConvertSvgToPng(svgImageText);
-                var pngBase64 = Convert.ToBase64String(pngImage);
-                var pngImageText = $"<img src=\"data:image/png;base64,{pngBase64}\" />";
-                svgNode.ParentNode.ReplaceChild(HtmlNode.CreateNode(pngImageText), svgNode);
+                foreach (var svgNode in svgNodes)
+                {
+                    var svgImageText = svgNode.OuterHtml;
+                    var pngImage = ConvertSvgToPng(svgImageText);
+                    var pngBase64 = Convert.ToBase64String(pngImage);
+                    var pngImageText = $"<img src=\"data:image/png;base64,{pngBase64}\" />";
+                    svgNode.ParentNode.ReplaceChild(HtmlNode.CreateNode(pngImageText), svgNode);
+                }
             }
 
             // Get the body node

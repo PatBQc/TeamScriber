@@ -15,6 +15,8 @@ using static OpenAI.ObjectModels.StaticValues.AssistantsStatics.MessageStatics;
 using static OpenAI.ObjectModels.StaticValues.ImageStatics;
 using PuppeteerSharp;
 using Markdig.Extensions.AutoIdentifiers;
+using Svg;
+using System.Reflection.Metadata;
 
 namespace TeamScriber.CommandLine
 {
@@ -154,7 +156,6 @@ namespace TeamScriber.CommandLine
             // Wait for all Mermaid diagrams to be rendered
             await page.WaitForFunctionAsync("() => document.querySelectorAll('.mermaid svg').length === document.querySelectorAll('.mermaid').length");
 
-
             // Select all Mermaid elements
             var mermaidElements = await page.QuerySelectorAllAsync(".mermaid");
 
@@ -163,9 +164,76 @@ namespace TeamScriber.CommandLine
                 // Extract the SVG content from the Mermaid element
                 var svgContent = await element.EvaluateFunctionAsync<string>("(elem) => elem.innerHTML");
 
-                // Embed the raw SVG content by replacing the Mermaid element
-                await element.EvaluateFunctionAsync("(elem, svg) => { elem.outerHTML = svg; }", svgContent);
+                // Create a new page to handle SVG to PNG conversion
+                using (var svgPage = await page.Browser.NewPageAsync())
+                {
+                    // Create a minimal HTML that embeds the SVG content
+                    string htmlTemplate = $@"
+                        <!DOCTYPE html>
+                        <html>
+                        <body>
+                            <div>{svgContent}</div>
+                        </body>
+                        </html>";
+
+                    // Set the content with the embedded SVG
+                    await svgPage.SetContentAsync(htmlTemplate);
+
+                    // Wait for the SVG to load/render properly
+                    await svgPage.WaitForSelectorAsync("svg");
+
+                    // Evaluate the bounding box of the SVG element
+                    var boundingBox = await svgPage.EvaluateFunctionAsync<BoundingBox>(@"() => {
+                            const svgElement = document.querySelector('svg');
+                            const rect = svgElement.getBoundingClientRect();
+                            return {
+                            x: rect.x,
+                            y: rect.y,
+                            width: rect.width,
+                            height: rect.height
+                            };
+                        }
+                        ");
+
+                    // Take a screenshot of the specific SVG bounding box at 4x resolution
+                    var screenshotOptions = new ScreenshotOptions
+                    {
+                        Type = ScreenshotType.Png,
+                        Clip = new PuppeteerSharp.Media.Clip
+                        {
+                            X = boundingBox.X,
+                            Y = boundingBox.Y,
+                            Width = boundingBox.Width,
+                            Height = boundingBox.Height,
+                            Scale = 4 // Ensures the image is captured at 4x resolution
+                        }
+                    };
+
+                    // Set the device scale factor to 4 to capture at 4x resolution
+                    await svgPage.SetViewportAsync(new ViewPortOptions
+                    {
+                        DeviceScaleFactor = 4
+                    });
+
+                    // Take a screenshot and get it as a base64 string
+                    var pngBase64 = await svgPage.ScreenshotBase64Async(screenshotOptions);
+
+                    // Create the base64 img tag
+                    string imgTag = $"<img src=\"data:image/png;base64,{pngBase64}\" alt=\"Mermaid Diagram\"/>";
+
+                    // Replace the Mermaid element with the base64 img tag
+                    await element.EvaluateFunctionAsync("(elem, img) => { elem.outerHTML = img; }", imgTag);
+                }
             }
+        }
+
+        // BoundingBox class to capture bounding box dimensions
+        class BoundingBox
+        {
+            public decimal X { get; set; }
+            public decimal Y { get; set; }
+            public decimal Width { get; set; }
+            public decimal Height { get; set; }
         }
 
         private static async Task InlineStylesAsync(IPage page)
