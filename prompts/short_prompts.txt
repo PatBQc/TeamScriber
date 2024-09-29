@@ -1,0 +1,1 @@
+Executive Summary|Generate a concise executive summary of the meeting in 3-5 key points. Include the main topics discussed and major decisions made.
