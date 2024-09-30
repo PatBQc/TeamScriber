@@ -29,9 +29,6 @@ namespace TeamScriber.Wpf
         public MainWindow()
         {
             InitializeComponent();
-
-            Console.SetOut(new TextBoxWriter(logTextBox));
-            Console.SetError(new TextBoxWriter(logTextBox, @"/!\ ERROR"));
         }
 
         // Simple file selection
@@ -94,7 +91,7 @@ namespace TeamScriber.Wpf
 
                 if (language == "fr")
                 {
-                    var promptsPath = "https://raw.githubusercontent.com/PatBQc/TeamScriber/refs/heads/main/prompts/short_prompts-fr.txt";
+                    var promptsPath = "https://raw.githubusercontent.com/PatBQc/TeamScriber/refs/heads/main/prompts/prompts-fr.txt";
                     var systemPromptsPath = "https://raw.githubusercontent.com/PatBQc/TeamScriber/refs/heads/main/prompts/promptSystem-fr.txt";
 
                     arguments += !string.IsNullOrEmpty(promptsPath) ? $"-p \"{promptsPath}\" " : "";
@@ -204,7 +201,9 @@ namespace TeamScriber.Wpf
                     });
                 });
 
-                await TeamScriber.CommandLine.Program.Main(args, progress);
+                using var texBoxLogger = new TextBoxWriter(logTextBox);
+
+                await TeamScriber.CommandLine.Program.Main(args, progress, texBoxLogger);
 
                 MessageBox.Show("Transcription completed successfully.", "Finished", MessageBoxButton.OK, MessageBoxImage.Information);
             }

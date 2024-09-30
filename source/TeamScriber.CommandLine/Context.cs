@@ -26,5 +26,7 @@ namespace TeamScriber
         public ProgressInfo ProgressInfo { get; set; }
 
         public IProgress<ProgressInfo> ProgressRepporter { get; set; }
+
+        public StringWriter Logger { get; set; }
     }
 }

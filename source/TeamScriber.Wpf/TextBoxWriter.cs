@@ -8,23 +8,20 @@ namespace TeamScriber.Wpf
     public class TextBoxWriter : TextWriter
     {
         private readonly TextBox _textBox;
-        private readonly string _prefix = string.Empty;
 
-        public TextBoxWriter(TextBox textBox, string prefix = "")
+        public TextBoxWriter(TextBox textBox)
         {
             _textBox = textBox;
-            _prefix = prefix;
         }
 
         public override void WriteLine(string value)
         {
-            string message = string.IsNullOrEmpty(_prefix) ? value : _prefix + " " + value;
-            base.WriteLine(message);
+            base.WriteLine(value);
 
             // Make sure updates happen on the UI thread
             _textBox.Dispatcher.Invoke(() =>
             {
-                _textBox.AppendText(message + Environment.NewLine);
+                _textBox.AppendText(value + Environment.NewLine);
                 _textBox.ScrollToEnd();  // Scrolls to the end after writing
             });
         }

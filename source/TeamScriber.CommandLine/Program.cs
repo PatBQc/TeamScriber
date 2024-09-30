@@ -12,10 +12,10 @@ namespace TeamScriber.CommandLine
     {
         public static async Task Main(string[] args)
         {
-            await Program.Main(args, null);
+            await Program.Main(args, null, null);
         }
 
-        public static async Task Main(string[] args, IProgress<ProgressInfo>? progress)
+        public static async Task Main(string[] args, IProgress<ProgressInfo>? progress, TextWriter additionnalLogger)
         {
             if(progress == null)
             {
@@ -24,6 +24,36 @@ namespace TeamScriber.CommandLine
             }
 
             var progressInfo = new ProgressInfo();
+
+            using MultiTextWriter consoleOut = new MultiTextWriter(Console.Out);
+            using MultiTextWriter consoleError = new MultiTextWriter(Console.Error);
+            using StringWriter logger = new StringWriter();
+
+            if(additionnalLogger != null)
+            {
+                consoleOut.AddWriter(additionnalLogger);
+                consoleError.AddWriter(additionnalLogger);
+            }
+
+            consoleOut.AddWriter(logger);
+            consoleError.AddWriter(logger);
+
+            Console.SetOut(consoleOut);
+            Console.SetError(consoleError);
+
+            Console.WriteLine("# Starting!");
+            Console.WriteLine();
+            Console.WriteLine("Congrats!  You TeamScriber session is now starting!");
+            Console.WriteLine();
+            Console.WriteLine("If you liked it, please consider giving us a star on GitHub and share the news!");
+            Console.WriteLine();
+            Console.WriteLine("If you see any bugs that need fixing, feature enhancements, quality of life improvements...");
+            Console.WriteLine("...please open an issue on GitHub and we will do our best to address it!");
+            Console.WriteLine();
+            Console.WriteLine("              -->    https://github.com/PatBQc/TeamScriber    <--");
+            Console.WriteLine();
+            Console.WriteLine();
+
 
             var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .WithParsed(options =>
@@ -56,6 +86,7 @@ namespace TeamScriber.CommandLine
             context.ProgressRepporter = progress;
             context.ProgressInfo = progressInfo;
             context.ProgressInfo.MaxValue = 100; // temporary value, will be updated later
+            context.Logger = logger;
 
 
             if (context.Options.RecordAudio)

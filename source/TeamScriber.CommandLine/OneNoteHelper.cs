@@ -77,6 +77,13 @@ namespace TeamScriber.CommandLine
                 Console.WriteLine("     Page created");
                 Console.WriteLine();
 
+                Console.WriteLine($"Appending currently logging...");
+                var logging = context.Logger.ToString();
+                await CreatePageWithContentAsync(notebook.Id, section.Id, "TeamScriber Logs", logging, 1);
+                Console.WriteLine("     Page created");
+                Console.WriteLine();
+
+
                 context.ProgressInfo.Value += progressTranscriptionChunk;
                 context.ProgressRepporter?.Report(context.ProgressInfo);
 
