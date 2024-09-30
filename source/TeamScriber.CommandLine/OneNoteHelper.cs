@@ -12,6 +12,7 @@ using Svg.Skia;
 using SkiaSharp;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json.Linq;
+using Markdig;
 
 namespace TeamScriber.CommandLine
 {
@@ -264,8 +265,8 @@ namespace TeamScriber.CommandLine
             // If we received raw text or an not conform html 
             if (bodyNode == null)
             {
-
                 innerHtml = System.Web.HttpUtility.HtmlEncode(pageContent);
+                innerHtml = innerHtml.ReplaceLineEndings().Replace(Environment.NewLine, "<br />" + Environment.NewLine);
             }
             else
             {
@@ -297,36 +298,56 @@ namespace TeamScriber.CommandLine
                 content
             );
 
-            response.EnsureSuccessStatusCode();
-
             if (!response.IsSuccessStatusCode)
             {
                 var errorText = await response.Content.ReadAsStringAsync();
                 Console.Out.WriteLine("/!\\ Error creating OneNote Page: " + errorText);
-                throw new Exception($"HTTP error! Status: {response.StatusCode}, Message: {errorText}");
+                //throw new Exception($"HTTP error! Status: {response.StatusCode}, Message: {errorText}");
             }
 
             if (level > 0)
             {
-                // Let's take some time to reflect on life mystery, like the time it might take to get from an API call to the next where you ressource is ready
-                Task.Delay(5000);
+                int retryPatch = 5;
+                bool successPatch = false;
+                string Patch = string.Empty;
 
-                var responseText = await response.Content.ReadAsStringAsync();
-
-                // Parse the JSON string
-                JObject jsonObject = JObject.Parse(responseText);
-
-                string id = jsonObject["id"].ToString();
-                var contentLevel = new StringContent("{\"level\": " + level + "}", Encoding.UTF8, "application/json");
-                var responseLevel = await client.PatchAsync($"https://graph.microsoft.com/v1.0/me/onenote/pages/{id}", contentLevel);
-
-                responseLevel.EnsureSuccessStatusCode();
-
-                if (!responseLevel.IsSuccessStatusCode)
+                while (retryPatch > 0 && !successPatch)
                 {
-                    var errorText = await response.Content.ReadAsStringAsync();
-                    Console.Out.WriteLine("/!\\ Error creating OneNote Page: " + errorText);
-                    throw new Exception($"HTTP error! Status: {response.StatusCode}, Message: {errorText}");
+                    // Let's take some time to reflect on life mystery, ...
+                    // ...like the time it might take to get from an API call to the next where you ressource is ready
+                    // To control the fact that I receive 404 errors if called to fast
+                    Task.Delay(5000);
+
+                    var responseText = await response.Content.ReadAsStringAsync();
+
+                    // Parse the JSON string
+                    JObject jsonObject = JObject.Parse(responseText);
+
+                    string id = jsonObject["id"].ToString();
+                    var contentLevel = new StringContent("{\"level\": " + level + "}", Encoding.UTF8, "application/json");
+                    var responseLevel = await client.PatchAsync($"https://graph.microsoft.com/v1.0/me/onenote/pages/{id}", contentLevel);
+
+                    if (!responseLevel.IsSuccessStatusCode)
+                    {
+                        Patch = await responseLevel.Content.ReadAsStringAsync();
+                        Console.Out.WriteLine("/!\\ Error changing level of OneNote Page: " + Patch);
+                        if (retryPatch > 1)
+                        {
+                            Console.Out.WriteLine("     Retrying...");
+                        }
+                        Console.WriteLine();
+                    }
+                    else
+                    {
+                        successPatch = true;
+                    }
+                    --retryPatch;
+                }
+
+                if(!successPatch)
+                {
+                    Console.Out.WriteLine("/!\\ Final error changing level of OneNote Page (just could not do it): " + Patch);
+                    Console.WriteLine();
                 }
             }
         }
